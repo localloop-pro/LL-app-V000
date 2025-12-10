@@ -81,6 +81,13 @@ async function main() {
   } else {
      await log('BETTER_AUTH_SECRET present', {}, 'H4');
   }
+
+  // Check Google Client ID
+  if (!envVars['GOOGLE_CLIENT_ID'] || envVars['GOOGLE_CLIENT_ID'].trim() === '') {
+     await log('GOOGLE_CLIENT_ID missing or empty', {}, 'H5');
+  } else {
+     await log('GOOGLE_CLIENT_ID present', {}, 'H5');
+  }
 }
 
 main().catch(console.error);
