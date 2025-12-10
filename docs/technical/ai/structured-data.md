@@ -1,409 +1,590 @@
-# Generating Structured Data
+# Structured Data Responses
 
-While text generation can be useful, your use case will likely call for generating structured data.
-For example, you might want to extract information from text, classify data, or generate synthetic data.
+> **Stack:** Next.js 14+ + Vercel AI SDK + Zod
+> **Purpose:** Get structured JSON responses from AI for UI rendering
 
-Many language models are capable of generating structured data, often defined as using "JSON modes" or "tools".
-However, you need to manually provide schemas and then validate the generated data as LLMs can produce incorrect or incomplete structured data.
+---
 
-The AI SDK standardises structured object generation across model providers
-with the [`generateObject`](/docs/reference/ai-sdk-core/generate-object)
-and [`streamObject`](/docs/reference/ai-sdk-core/stream-object) functions.
-You can use both functions with different output strategies, e.g. `array`, `object`, `enum`, or `no-schema`,
-and with different generation modes, e.g. `auto`, `tool`, or `json`.
-You can use [Zod schemas](/docs/reference/ai-sdk-core/zod-schema), [Valibot](/docs/reference/ai-sdk-core/valibot-schema), or [JSON schemas](/docs/reference/ai-sdk-core/json-schema) to specify the shape of the data that you want,
-and the AI model will generate data that conforms to that structure.
+## Overview
 
-<Note>
-  You can pass Zod objects directly to the AI SDK functions or use the
-  `zodSchema` helper function.
-</Note>
+When building UI components that need structured data from AI (like offer cards, product listings, or analytics summaries), use structured output instead of plain text streaming.
 
-## Generate Object
+---
 
-The `generateObject` generates structured data from a prompt.
-The schema is also used to validate the generated data, ensuring type safety and correctness.
+## Basic Structured Output
 
-```ts
+### Route Handler
+
+```typescript
+// app/api/ai/generate-offer/route.ts
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateObject } from "ai";
 import { z } from "zod";
 
-const { object } = await generateObject({
-  model: "openai/gpt-4.1",
-  schema: z.object({
-    recipe: z.object({
-      name: z.string(),
-      ingredients: z.array(z.object({ name: z.string(), amount: z.string() })),
-      steps: z.array(z.string()),
-    }),
-  }),
-  prompt: "Generate a lasagna recipe.",
-});
-```
-
-<Note>
-  See `generateObject` in action with [these examples](#more-examples)
-</Note>
-
-### Accessing response headers & body
-
-Sometimes you need access to the full response from the model provider,
-e.g. to access some provider-specific headers or body content.
-
-You can access the raw response headers and body using the `response` property:
-
-```ts
-import { generateObject } from "ai";
-
-const result = await generateObject({
-  // ...
+const offerSchema = z.object({
+  title: z.string().describe("Catchy offer title, max 10 words"),
+  description: z.string().describe("Engaging description, 50-100 words"),
+  discount: z.number().describe("Discount percentage"),
+  conditions: z.string().optional().describe("Any conditions or restrictions"),
+  socialCaption: z.string().describe("Instagram/Facebook caption with emojis"),
+  seoKeywords: z.array(z.string()).describe("3-5 SEO keywords"),
+  urgencyText: z.string().describe("Urgency message like 'Today only!'"),
 });
 
-console.log(JSON.stringify(result.response.headers, null, 2));
-console.log(JSON.stringify(result.response.body, null, 2));
-```
+export type GeneratedOffer = z.infer<typeof offerSchema>;
 
-## Stream Object
+export async function POST(req: Request) {
+  const { businessName, offerType, discountValue, products } = await req.json();
 
-Given the added complexity of returning structured data, model response time can be unacceptable for your interactive use case.
-With the [`streamObject`](/docs/reference/ai-sdk-core/stream-object) function, you can stream the model's response as it is generated.
+  const openrouter = createOpenRouter({
+    apiKey: process.env.OPENROUTER_API_KEY,
+  });
 
-```ts
-import { streamObject } from "ai";
+  const result = await generateObject({
+    model: openrouter("anthropic/claude-3.5-sonnet"),
+    schema: offerSchema,
+    prompt: `Generate marketing content for this offer:
+    
+Business: ${businessName}
+Offer Type: ${offerType}
+Discount: ${discountValue}%
+Products: ${products.join(", ")}
 
-const { partialObjectStream } = streamObject({
-  // ...
-});
+Create engaging, professional content that drives conversions.`,
+  });
 
-// use partialObjectStream as an async iterable
-for await (const partialObject of partialObjectStream) {
-  console.log(partialObject);
+  return Response.json(result.object);
 }
 ```
 
-You can use `streamObject` to stream generated UIs in combination with React Server Components (see [Generative UI](../ai-sdk-rsc))) or the [`useObject`](/docs/reference/ai-sdk-ui/use-object) hook.
+### Client Usage
 
-<Note>See `streamObject` in action with [these examples](#more-examples)</Note>
+```tsx
+// components/offer-generator.tsx
+"use client";
 
-### `onError` callback
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2, Sparkles, Copy, Check } from "lucide-react";
+import type { GeneratedOffer } from "@/app/api/ai/generate-offer/route";
 
-`streamObject` immediately starts streaming.
-Errors become part of the stream and are not thrown to prevent e.g. servers from crashing.
+export function OfferGenerator({ businessName }: { businessName: string }) {
+  const [loading, setLoading] = useState(false);
+  const [offer, setOffer] = useState<GeneratedOffer | null>(null);
+  const [discountValue, setDiscountValue] = useState("20");
+  const [copied, setCopied] = useState<string | null>(null);
 
-To log errors, you can provide an `onError` callback that is triggered when an error occurs.
+  const generateOffer = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/ai/generate-offer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          businessName,
+          offerType: "percentage",
+          discountValue: parseInt(discountValue),
+          products: ["all items"],
+        }),
+      });
+      const data = await res.json();
+      setOffer(data);
+    } catch (error) {
+      console.error("Failed to generate offer:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-```tsx highlight="5-7"
-import { streamObject } from "ai";
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(field);
+    setTimeout(() => setCopied(null), 2000);
+  };
 
-const result = streamObject({
-  // ...
-  onError({ error }) {
-    console.error(error); // your error logging logic here
-  },
-});
-```
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5" />
+            AI Offer Generator
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="discount">Discount Percentage</Label>
+            <Input
+              id="discount"
+              type="number"
+              value={discountValue}
+              onChange={(e) => setDiscountValue(e.target.value)}
+              placeholder="20"
+            />
+          </div>
+          <Button onClick={generateOffer} disabled={loading} className="w-full">
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4 mr-2" />
+                Generate Offer Content
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
 
-## Output Strategy
+      {offer && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Generated Content</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Title */}
+            <div className="space-y-1">
+              <Label className="text-muted-foreground text-xs">TITLE</Label>
+              <div className="flex items-center justify-between bg-muted p-3 rounded-lg">
+                <span className="font-semibold">{offer.title}</span>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => copyToClipboard(offer.title, "title")}
+                >
+                  {copied === "title" ? (
+                    <Check className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
 
-You can use both functions with different output strategies, e.g. `array`, `object`, `enum`, or `no-schema`.
+            {/* Description */}
+            <div className="space-y-1">
+              <Label className="text-muted-foreground text-xs">DESCRIPTION</Label>
+              <div className="flex items-start justify-between bg-muted p-3 rounded-lg">
+                <p className="text-sm">{offer.description}</p>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => copyToClipboard(offer.description, "desc")}
+                >
+                  {copied === "desc" ? (
+                    <Check className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
 
-### Object
+            {/* Social Caption */}
+            <div className="space-y-1">
+              <Label className="text-muted-foreground text-xs">SOCIAL CAPTION</Label>
+              <div className="flex items-start justify-between bg-muted p-3 rounded-lg">
+                <p className="text-sm">{offer.socialCaption}</p>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => copyToClipboard(offer.socialCaption, "social")}
+                >
+                  {copied === "social" ? (
+                    <Check className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
 
-The default output strategy is `object`, which returns the generated data as an object.
-You don't need to specify the output strategy if you want to use the default.
+            {/* Urgency */}
+            <div className="space-y-1">
+              <Label className="text-muted-foreground text-xs">URGENCY TEXT</Label>
+              <div className="bg-destructive/10 text-destructive p-3 rounded-lg font-semibold">
+                {offer.urgencyText}
+              </div>
+            </div>
 
-### Array
-
-If you want to generate an array of objects, you can set the output strategy to `array`.
-When you use the `array` output strategy, the schema specifies the shape of an array element.
-With `streamObject`, you can also stream the generated array elements using `elementStream`.
-
-```ts highlight="7,18"
-import { openai } from "@ai-sdk/openai";
-import { streamObject } from "ai";
-import { z } from "zod";
-
-const { elementStream } = streamObject({
-  model: openai("gpt-4.1"),
-  output: "array",
-  schema: z.object({
-    name: z.string(),
-    class: z
-      .string()
-      .describe("Character class, e.g. warrior, mage, or thief."),
-    description: z.string(),
-  }),
-  prompt: "Generate 3 hero descriptions for a fantasy role playing game.",
-});
-
-for await (const hero of elementStream) {
-  console.log(hero);
+            {/* SEO Keywords */}
+            <div className="space-y-1">
+              <Label className="text-muted-foreground text-xs">SEO KEYWORDS</Label>
+              <div className="flex flex-wrap gap-2">
+                {offer.seoKeywords.map((keyword, i) => (
+                  <span
+                    key={i}
+                    className="bg-primary/10 text-primary px-2 py-1 rounded text-sm"
+                  >
+                    {keyword}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
 }
 ```
 
-### Enum
+---
 
-If you want to generate a specific enum value, e.g. for classification tasks,
-you can set the output strategy to `enum`
-and provide a list of possible values in the `enum` parameter.
+## Complex Nested Schemas
 
-<Note>Enum output is only available with `generateObject`.</Note>
+### Business Profile Generator
 
-```ts highlight="5-6"
-import { generateObject } from "ai";
-
-const { object } = await generateObject({
-  model: "openai/gpt-4.1",
-  output: "enum",
-  enum: ["action", "comedy", "drama", "horror", "sci-fi"],
-  prompt:
-    "Classify the genre of this movie plot: " +
-    '"A group of astronauts travel through a wormhole in search of a ' +
-    'new habitable planet for humanity."',
-});
-```
-
-### No Schema
-
-In some cases, you might not want to use a schema,
-for example when the data is a dynamic user request.
-You can use the `output` setting to set the output format to `no-schema` in those cases
-and omit the schema parameter.
-
-```ts highlight="6"
-import { openai } from "@ai-sdk/openai";
-import { generateObject } from "ai";
-
-const { object } = await generateObject({
-  model: openai("gpt-4.1"),
-  output: "no-schema",
-  prompt: "Generate a lasagna recipe.",
-});
-```
-
-## Schema Name and Description
-
-You can optionally specify a name and description for the schema. These are used by some providers for additional LLM guidance, e.g. via tool or schema name.
-
-```ts highlight="6-7"
+```typescript
+// app/api/ai/generate-profile/route.ts
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateObject } from "ai";
 import { z } from "zod";
 
-const { object } = await generateObject({
-  model: "openai/gpt-4.1",
-  schemaName: "Recipe",
-  schemaDescription: "A recipe for a dish.",
-  schema: z.object({
-    name: z.string(),
-    ingredients: z.array(z.object({ name: z.string(), amount: z.string() })),
-    steps: z.array(z.string()),
+const businessProfileSchema = z.object({
+  tagline: z.string().describe("Catchy business tagline, max 10 words"),
+  description: z.object({
+    short: z.string().describe("One sentence description"),
+    medium: z.string().describe("2-3 sentence description"),
+    full: z.string().describe("Full paragraph description for website"),
   }),
-  prompt: "Generate a lasagna recipe.",
-});
-```
-
-## Accessing Reasoning
-
-You can access the reasoning used by the language model to generate the object via the `reasoning` property on the result. This property contains a string with the model's thought process, if available.
-
-```ts
-import { openai, OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
-import { generateObject } from "ai";
-import { z } from "zod/v4";
-
-const result = await generateObject({
-  model: openai("gpt-5"),
-  schema: z.object({
-    recipe: z.object({
-      name: z.string(),
-      ingredients: z.array(
-        z.object({
-          name: z.string(),
-          amount: z.string(),
-        })
-      ),
-      steps: z.array(z.string()),
-    }),
+  personality: z.object({
+    tone: z.enum(["professional", "friendly", "quirky", "luxury", "casual"]),
+    traits: z.array(z.string()).describe("3-5 personality traits"),
+    voiceStyle: z.string().describe("How the Digital Twin should speak"),
   }),
-  prompt: "Generate a lasagna recipe.",
-  providerOptions: {
-    openai: {
-      strictJsonSchema: true,
-      reasoningSummary: "detailed",
-    } satisfies OpenAIResponsesProviderOptions,
-  },
+  seo: z.object({
+    metaTitle: z.string().max(60),
+    metaDescription: z.string().max(160),
+    keywords: z.array(z.string()),
+  }),
+  socialBios: z.object({
+    twitter: z.string().max(160),
+    instagram: z.string().max(150),
+    linkedin: z.string().max(200),
+  }),
 });
 
-console.log(result.reasoning);
+export type GeneratedProfile = z.infer<typeof businessProfileSchema>;
+
+export async function POST(req: Request) {
+  const { businessName, industry, location, uniquePoints } = await req.json();
+
+  const openrouter = createOpenRouter({
+    apiKey: process.env.OPENROUTER_API_KEY,
+  });
+
+  const result = await generateObject({
+    model: openrouter("anthropic/claude-3.5-sonnet"),
+    schema: businessProfileSchema,
+    prompt: `Generate a complete business profile for:
+
+Business Name: ${businessName}
+Industry: ${industry}
+Location: ${location}
+Unique Selling Points: ${uniquePoints.join(", ")}
+
+Create professional, engaging content that will attract local customers.`,
+  });
+
+  return Response.json(result.object);
+}
 ```
+
+---
+
+## Streaming Structured Data
+
+For large objects, stream the generation:
+
+```typescript
+// app/api/ai/analyze-reviews/route.ts
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { streamObject } from "ai";
+import { z } from "zod";
+
+const reviewAnalysisSchema = z.object({
+  summary: z.string().describe("Overall summary of reviews"),
+  sentiment: z.object({
+    overall: z.enum(["positive", "neutral", "negative"]),
+    score: z.number().min(0).max(100),
+  }),
+  themes: z.array(
+    z.object({
+      topic: z.string(),
+      sentiment: z.enum(["positive", "neutral", "negative"]),
+      mentions: z.number(),
+      examples: z.array(z.string()),
+    })
+  ),
+  recommendations: z.array(z.string()).describe("Actionable recommendations"),
+  responseTemplates: z.array(
+    z.object({
+      forSentiment: z.enum(["positive", "negative"]),
+      template: z.string(),
+    })
+  ),
+});
+
+export async function POST(req: Request) {
+  const { reviews } = await req.json();
+
+  const openrouter = createOpenRouter({
+    apiKey: process.env.OPENROUTER_API_KEY,
+  });
+
+  const result = streamObject({
+    model: openrouter("anthropic/claude-3.5-sonnet"),
+    schema: reviewAnalysisSchema,
+    prompt: `Analyze these customer reviews and provide insights:
+
+${reviews.map((r: any, i: number) => `Review ${i + 1}: "${r.text}" (${r.rating}/5 stars)`).join("\n")}
+
+Provide a comprehensive analysis with actionable recommendations.`,
+  });
+
+  return result.toTextStreamResponse();
+}
+```
+
+### Client with Streaming
+
+```tsx
+// components/review-analyzer.tsx
+"use client";
+
+import { experimental_useObject as useObject } from "@ai-sdk/react";
+import { reviewAnalysisSchema } from "@/lib/schemas";
+
+export function ReviewAnalyzer({ reviews }: { reviews: any[] }) {
+  const { object, submit, isLoading } = useObject({
+    api: "/api/ai/analyze-reviews",
+    schema: reviewAnalysisSchema,
+  });
+
+  return (
+    <div>
+      <Button onClick={() => submit({ reviews })} disabled={isLoading}>
+        Analyze Reviews
+      </Button>
+
+      {/* Results stream in as they're generated */}
+      {object && (
+        <div className="space-y-4">
+          {object.summary && (
+            <Card>
+              <CardHeader>Summary</CardHeader>
+              <CardContent>{object.summary}</CardContent>
+            </Card>
+          )}
+
+          {object.sentiment && (
+            <Card>
+              <CardHeader>Sentiment: {object.sentiment.overall}</CardHeader>
+              <CardContent>
+                <Progress value={object.sentiment.score} />
+              </CardContent>
+            </Card>
+          )}
+
+          {object.themes?.map((theme, i) => (
+            <Card key={i}>
+              <CardHeader>{theme.topic}</CardHeader>
+              <CardContent>
+                <Badge variant={theme.sentiment === "positive" ? "default" : "destructive"}>
+                  {theme.sentiment}
+                </Badge>
+                <p>{theme.mentions} mentions</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+---
+
+## Enum Selections
+
+For classification tasks:
+
+```typescript
+// app/api/ai/classify-business/route.ts
+const industrySchema = z.object({
+  primaryCategory: z.enum([
+    "food_beverage",
+    "retail",
+    "health_beauty",
+    "professional_services",
+    "entertainment",
+    "accommodation",
+    "automotive",
+    "home_services",
+    "education",
+    "other",
+  ]),
+  subCategories: z.array(z.string()).max(3),
+  suggestedTags: z.array(z.string()).max(10),
+  priceRange: z.enum(["$", "$$", "$$$", "$$$$"]),
+  targetAudience: z.array(
+    z.enum([
+      "families",
+      "young_professionals",
+      "seniors",
+      "tourists",
+      "students",
+      "businesses",
+    ])
+  ),
+});
+
+export async function POST(req: Request) {
+  const { businessName, description } = await req.json();
+
+  const result = await generateObject({
+    model: openrouter("openai/gpt-4o-mini"), // Faster for classification
+    schema: industrySchema,
+    prompt: `Classify this business:
+Name: ${businessName}
+Description: ${description}`,
+  });
+
+  return Response.json(result.object);
+}
+```
+
+---
+
+## Array Generation
+
+Generate multiple items:
+
+```typescript
+// app/api/ai/generate-faqs/route.ts
+const faqSchema = z.object({
+  faqs: z.array(
+    z.object({
+      question: z.string(),
+      answer: z.string(),
+      category: z.enum(["general", "products", "pricing", "booking", "location"]),
+    })
+  ).min(5).max(10),
+});
+
+export async function POST(req: Request) {
+  const { businessInfo } = await req.json();
+
+  const result = await generateObject({
+    model: openrouter("anthropic/claude-3.5-sonnet"),
+    schema: faqSchema,
+    prompt: `Generate FAQs for this business that customers commonly ask:
+${JSON.stringify(businessInfo, null, 2)}`,
+  });
+
+  return Response.json(result.object);
+}
+```
+
+---
 
 ## Error Handling
 
-When `generateObject` cannot generate a valid object, it throws a [`AI_NoObjectGeneratedError`](/docs/reference/ai-sdk-errors/ai-no-object-generated-error).
+```typescript
+// app/api/ai/generate-offer/route.ts
+import { generateObject, GenerateObjectResult } from "ai";
 
-This error occurs when the AI provider fails to generate a parsable object that conforms to the schema.
-It can arise due to the following reasons:
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    
+    // Validate input
+    if (!body.businessName) {
+      return Response.json(
+        { error: "Business name is required" },
+        { status: 400 }
+      );
+    }
 
-- The model failed to generate a response.
-- The model generated a response that could not be parsed.
-- The model generated a response that could not be validated against the schema.
+    const result = await generateObject({
+      model: openrouter("anthropic/claude-3.5-sonnet"),
+      schema: offerSchema,
+      prompt: `...`,
+    });
 
-The error preserves the following information to help you log the issue:
+    // Validate output matches schema
+    const parsed = offerSchema.safeParse(result.object);
+    if (!parsed.success) {
+      console.error("Schema validation failed:", parsed.error);
+      return Response.json(
+        { error: "Generated content failed validation" },
+        { status: 500 }
+      );
+    }
 
-- `text`: The text that was generated by the model. This can be the raw text or the tool call text, depending on the object generation mode.
-- `response`: Metadata about the language model response, including response id, timestamp, and model.
-- `usage`: Request token usage.
-- `cause`: The cause of the error (e.g. a JSON parsing error). You can use this for more detailed error handling.
-
-```ts
-import { generateObject, NoObjectGeneratedError } from "ai";
-
-try {
-  await generateObject({ model, schema, prompt });
-} catch (error) {
-  if (NoObjectGeneratedError.isInstance(error)) {
-    console.log("NoObjectGeneratedError");
-    console.log("Cause:", error.cause);
-    console.log("Text:", error.text);
-    console.log("Response:", error.response);
-    console.log("Usage:", error.usage);
+    return Response.json(parsed.data);
+  } catch (error) {
+    console.error("AI generation error:", error);
+    return Response.json(
+      { error: "Failed to generate content" },
+      { status: 500 }
+    );
   }
 }
 ```
 
-## Repairing Invalid or Malformed JSON
+---
 
-<Note type="warning">
-  The `repairText` function is experimental and may change in the future.
-</Note>
+## Reusable Schema Library
 
-Sometimes the model will generate invalid or malformed JSON.
-You can use the `repairText` function to attempt to repair the JSON.
+```typescript
+// lib/ai/schemas.ts
+import { z } from "zod";
 
-It receives the error, either a `JSONParseError` or a `TypeValidationError`,
-and the text that was generated by the model.
-You can then attempt to repair the text and return the repaired text.
-
-```ts highlight="7-10"
-import { generateObject } from "ai";
-
-const { object } = await generateObject({
-  model,
-  schema,
-  prompt,
-  experimental_repairText: async ({ text, error }) => {
-    // example: add a closing brace to the text
-    return text + "}";
-  },
+export const offerContentSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  urgencyText: z.string(),
+  socialCaption: z.string(),
+  seoKeywords: z.array(z.string()),
 });
+
+export const businessDescriptionSchema = z.object({
+  short: z.string().max(100),
+  medium: z.string().max(300),
+  full: z.string().max(1000),
+});
+
+export const personalitySchema = z.object({
+  tone: z.enum(["professional", "friendly", "quirky", "luxury", "casual"]),
+  traits: z.array(z.string()),
+  voiceStyle: z.string(),
+});
+
+export const reviewResponseSchema = z.object({
+  response: z.string(),
+  sentiment: z.enum(["positive", "neutral", "negative"]),
+  suggestedAction: z.string().optional(),
+});
+
+// Type exports
+export type OfferContent = z.infer<typeof offerContentSchema>;
+export type BusinessDescription = z.infer<typeof businessDescriptionSchema>;
+export type Personality = z.infer<typeof personalitySchema>;
+export type ReviewResponse = z.infer<typeof reviewResponseSchema>;
 ```
 
-## Structured outputs with `generateText` and `streamText`
+---
 
-You can generate structured data with `generateText` and `streamText` by using the `experimental_output` setting.
+## Related Documentation
 
-<Note>
-  Some models, e.g. those by OpenAI, support structured outputs and tool calling
-  at the same time. This is only possible with `generateText` and `streamText`.
-</Note>
-
-<Note type="warning">
-  Structured output generation with `generateText` and `streamText` is
-  experimental and may change in the future.
-</Note>
-
-### `generateText`
-
-```ts highlight="2,4-18"
-// experimental_output is a structured object that matches the schema:
-const { experimental_output } = await generateText({
-  // ...
-  experimental_output: Output.object({
-    schema: z.object({
-      name: z.string(),
-      age: z.number().nullable().describe("Age of the person."),
-      contact: z.object({
-        type: z.literal("email"),
-        value: z.string(),
-      }),
-      occupation: z.object({
-        type: z.literal("employed"),
-        company: z.string(),
-        position: z.string(),
-      }),
-    }),
-  }),
-  prompt: "Generate an example person for testing.",
-});
-```
-
-### `streamText`
-
-```ts highlight="2,4-18"
-// experimental_partialOutputStream contains generated partial objects:
-const { experimental_partialOutputStream } = await streamText({
-  // ...
-  experimental_output: Output.object({
-    schema: z.object({
-      name: z.string(),
-      age: z.number().nullable().describe("Age of the person."),
-      contact: z.object({
-        type: z.literal("email"),
-        value: z.string(),
-      }),
-      occupation: z.object({
-        type: z.literal("employed"),
-        company: z.string(),
-        position: z.string(),
-      }),
-    }),
-  }),
-  prompt: "Generate an example person for testing.",
-});
-```
-
-## More Examples
-
-You can see `generateObject` and `streamObject` in action using various frameworks in the following examples:
-
-### `generateObject`
-
-<ExampleLinks
-examples={[
-{
-title: 'Learn to generate objects in Node.js',
-link: '/examples/node/generating-structured-data/generate-object',
-},
-{
-title:
-'Learn to generate objects in Next.js with Route Handlers (AI SDK UI)',
-link: '/examples/next-pages/basics/generating-object',
-},
-{
-title:
-'Learn to generate objects in Next.js with Server Actions (AI SDK RSC)',
-link: '/examples/next-app/basics/generating-object',
-},
-]}
-/>
-
-### `streamObject`
-
-<ExampleLinks
-examples={[
-{
-title: 'Learn to stream objects in Node.js',
-link: '/examples/node/streaming-structured-data/stream-object',
-},
-{
-title:
-'Learn to stream objects in Next.js with Route Handlers (AI SDK UI)',
-link: '/examples/next-pages/basics/streaming-object-generation',
-},
-{
-title:
-'Learn to stream objects in Next.js with Server Actions (AI SDK RSC)',
-link: '/examples/next-app/basics/streaming-object-generation',
-},
-]}
-/>
+- [AI Streaming](/docs/technical/ai/streaming.md)
+- [Zod Documentation](https://zod.dev)
+- [Vercel AI SDK - Structured Output](https://sdk.vercel.ai/docs/ai-sdk-core/generating-structured-data)

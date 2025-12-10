@@ -1,108 +1,57 @@
-# Next.js App Router Quickstart
+# AI Streaming Implementation
 
-The AI SDK is a powerful Typescript library designed to help developers build AI-powered applications.
+> **Stack:** Next.js 14+ (App Router) + Vercel AI SDK + OpenRouter
+> **Purpose:** Real-time AI responses for Digital Twin conversations
 
-In this quickstart tutorial, you'll build a simple AI-chatbot with a streaming user interface. Along the way, you'll learn key concepts and techniques that are fundamental to using the SDK in your own projects.
+---
 
-If you are unfamiliar with the concepts of [Prompt Engineering](/docs/advanced/prompt-engineering) and [HTTP Streaming](/docs/advanced/why-streaming), you can optionally read these documents first.
+## Overview
 
-## Prerequisites
+LocalLoop uses streaming AI responses for natural, real-time conversations with Digital Twins. This document covers the implementation using the Vercel AI SDK with OpenRouter as the provider.
 
-To follow this quickstart, you'll need:
+---
 
-- Node.js 18+ and pnpm installed on your local development machine.
-- An OpenRouter API key.
+## Dependencies
 
-If you haven't obtained your OpenRouter API key, you can do so by [signing up](https://openrouter.ai/) on the OpenRouter website and visiting [https://openrouter.ai/settings/keys](https://openrouter.ai/settings/keys).
-
-## Create Your Application
-
-Start by creating a new Next.js application. This command will create a new directory named `my-ai-app` and set up a basic Next.js application inside it.
-
-<div className="mb-4">
-  <Note>
-    Be sure to select yes when prompted to use the App Router and Tailwind CSS.
-    If you are looking for the Next.js Pages Router quickstart guide, you can
-    find it [here](/docs/getting-started/nextjs-pages-router).
-  </Note>
-</div>
-
-<Snippet text="pnpm create next-app@latest my-ai-app" />
-
-Navigate to the newly created directory:
-
-<Snippet text="cd my-ai-app" />
-
-### Install dependencies
-
-Install `ai`, `@ai-sdk/react`, and `@openrouter/ai-sdk-provider`, the AI package, AI SDK's React hooks, and the OpenRouter provider respectively.
-
-<Note>
-  The AI SDK is designed to be a unified interface to interact with any large
-  language model. This means that you can change model and providers with just
-  one line of code! Learn more about [available providers](/providers) and
-  [building custom providers](/providers/community-providers/custom-providers)
-  in the [providers](/providers) section.
-</Note>
-<div className="my-4">
-  <Tabs items={['pnpm', 'npm', 'yarn', 'bun']}>
-    <Tab>
-      <Snippet text="pnpm add ai @ai-sdk/react @openrouter/ai-sdk-provider zod" dark />
-    </Tab>
-    <Tab>
-      <Snippet text="npm install ai @ai-sdk/react @openrouter/ai-sdk-provider zod" dark />
-    </Tab>
-    <Tab>
-      <Snippet text="yarn add ai @ai-sdk/react @openrouter/ai-sdk-provider zod" dark />
-    </Tab>
-
-    <Tab>
-      <Snippet text="bun add ai @ai-sdk/react @openrouter/ai-sdk-provider zod" dark />
-    </Tab>
-
-  </Tabs>
-</div>
-
-### Configure OpenRouter API key
-
-Create a `.env.local` file in your project root and add your OpenRouter API Key. This key is used to authenticate your application with OpenRouter.
-
-<Snippet text="touch .env.local" />
-
-Edit the `.env.local` file:
-
-```env filename=".env.local"
-OPENROUTER_API_KEY=sk-or-v1-xxxxxxxxx
-OPENROUTER_MODEL=openai/gpt-5-mini
+```bash
+pnpm add ai @ai-sdk/react @openrouter/ai-sdk-provider zod
 ```
 
-Replace the API key with your actual OpenRouter API key from [https://openrouter.ai/settings/keys](https://openrouter.ai/settings/keys).
+---
 
-<Note className="mb-4">
-  You can browse available models at [https://openrouter.ai/models](https://openrouter.ai/models) and set your preferred model via the `OPENROUTER_MODEL` environment variable.
-</Note>
+## Environment Setup
 
-## Create a Route Handler
+```env
+# .env.local
+OPENROUTER_API_KEY=sk-or-v1-xxxxxxxxx
+OPENROUTER_MODEL=anthropic/claude-3.5-sonnet
 
-Create a route handler, `app/api/chat/route.ts` and add the following code:
+# Alternative models available via OpenRouter:
+# anthropic/claude-3.5-sonnet (recommended for quality)
+# openai/gpt-4o-mini (faster, cheaper)
+# meta-llama/llama-3.1-70b-instruct (open source)
+```
 
-```tsx filename="app/api/chat/route.ts"
+---
+
+## Route Handler: Basic Chat
+
+```typescript
+// app/api/chat/route.ts
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { streamText, UIMessage, convertToModelMessages } from "ai";
 
-// Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();
 
-  // Initialize OpenRouter with API key from environment
   const openrouter = createOpenRouter({
     apiKey: process.env.OPENROUTER_API_KEY,
   });
 
   const result = streamText({
-    model: openrouter(process.env.OPENROUTER_MODEL || "openai/gpt-5-mini"),
+    model: openrouter(process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini"),
     messages: convertToModelMessages(messages),
   });
 
@@ -110,127 +59,128 @@ export async function POST(req: Request) {
 }
 ```
 
-Let's take a look at what is happening in this code:
+---
 
-1. Define an asynchronous `POST` request handler and extract `messages` from the body of the request. The `messages` variable contains a history of the conversation between you and the chatbot and provides the chatbot with the necessary context to make the next generation. The `messages` are of UIMessage type, which are designed for use in application UI - they contain the entire message history and associated metadata like timestamps.
-2. Call [`streamText`](/docs/reference/ai-sdk-core/stream-text), which is imported from the `ai` package. This function accepts a configuration object that contains a `model` provider (created using `createOpenRouter` from `@openrouter/ai-sdk-provider`) and `messages` (defined in step 1). You can pass additional [settings](/docs/ai-sdk-core/settings) to further customise the model's behaviour. The `messages` key expects a `ModelMessage[]` array. This type is different from `UIMessage` in that it does not include metadata, such as timestamps or sender information. To convert between these types, we use the `convertToModelMessages` function, which strips the UI-specific metadata and transforms the `UIMessage[]` array into the `ModelMessage[]` format that the model expects.
-3. The `streamText` function returns a [`StreamTextResult`](/docs/reference/ai-sdk-core/stream-text#result-object). This result object contains the [ `toUIMessageStreamResponse` ](/docs/reference/ai-sdk-core/stream-text#to-data-stream-response) function which converts the result to a streamed response object.
-4. Finally, return the result to the client to stream the response.
+## Route Handler: Digital Twin Chat
 
-This Route Handler creates a POST request endpoint at `/api/chat`.
-
-## Wire up the UI
-
-Now that you have a Route Handler that can query an LLM, it's time to setup your frontend. The AI SDK's [ UI ](/docs/ai-sdk-ui) package abstracts the complexity of a chat interface into one hook, [`useChat`](/docs/reference/ai-sdk-ui/use-chat).
-
-Update your root page (`app/page.tsx`) with the following code to show a list of chat messages and provide a user message input:
-
-```tsx filename="app/page.tsx"
-"use client";
-
-import { useChat } from "@ai-sdk/react";
-import { useState } from "react";
-
-export default function Chat() {
-  const [input, setInput] = useState("");
-  const { messages, sendMessage } = useChat();
-  return (
-    <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
-      {messages.map((message) => (
-        <div key={message.id} className="whitespace-pre-wrap">
-          {message.role === "user" ? "User: " : "AI: "}
-          {message.parts.map((part, i) => {
-            switch (part.type) {
-              case "text":
-                return <div key={`${message.id}-${i}`}>{part.text}</div>;
-            }
-          })}
-        </div>
-      ))}
-
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          sendMessage({ text: input });
-          setInput("");
-        }}
-      >
-        <input
-          className="fixed dark:bg-zinc-900 bottom-0 w-full max-w-md p-2 mb-8 border border-zinc-300 dark:border-zinc-800 rounded shadow-xl"
-          value={input}
-          placeholder="Say something..."
-          onChange={(e) => setInput(e.currentTarget.value)}
-        />
-      </form>
-    </div>
-  );
-}
-```
-
-<Note>
-  Make sure you add the `"use client"` directive to the top of your file. This
-  allows you to add interactivity with Javascript.
-</Note>
-
-This page utilizes the `useChat` hook, which will, by default, use the `POST` API route you created earlier (`/api/chat`). The hook provides functions and state for handling user input and form submission. The `useChat` hook provides multiple utility functions and state variables:
-
-- `messages` - the current chat messages (an array of objects with `id`, `role`, and `parts` properties).
-- `sendMessage` - a function to send a message to the chat API.
-
-The component uses local state (`useState`) to manage the input field value, and handles form submission by calling `sendMessage` with the input text and then clearing the input field.
-
-The LLM's response is accessed through the message `parts` array. Each message contains an ordered array of `parts` that represents everything the model generated in its response. These parts can include plain text, reasoning tokens, and more that you will see later. The `parts` array preserves the sequence of the model's outputs, allowing you to display or process each component in the order it was generated.
-
-## Running Your Application
-
-With that, you have built everything you need for your chatbot! To start your application, use the command:
-
-<Snippet text="pnpm run dev" />
-
-Head to your browser and open http://localhost:3000. You should see an input field. Test it out by entering a message and see the AI chatbot respond in real-time! The AI SDK makes it fast and easy to build AI chat interfaces with Next.js.
-
-## Enhance Your Chatbot with Tools
-
-While large language models (LLMs) have incredible generation capabilities, they struggle with discrete tasks (e.g. mathematics) and interacting with the outside world (e.g. getting the weather). This is where [tools](/docs/ai-sdk-core/tools-and-tool-calling) come in.
-
-Tools are actions that an LLM can invoke. The results of these actions can be reported back to the LLM to be considered in the next response.
-
-For example, if a user asks about the current weather, without tools, the model would only be able to provide general information based on its training data. But with a weather tool, it can fetch and provide up-to-date, location-specific weather information.
-
-Let's enhance your chatbot by adding a simple weather tool.
-
-### Update Your Route Handler
-
-Modify your `app/api/chat/route.ts` file to include the new weather tool:
-
-```tsx filename="app/api/chat/route.ts" highlight="2,13-27"
+```typescript
+// app/api/twin-chat/route.ts
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { streamText, UIMessage, convertToModelMessages, tool } from "ai";
 import { z } from "zod";
+import { db } from "@/lib/db";
+import { cards, products, promotions, cardDigitalTwins } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-  const { messages }: { messages: UIMessage[] } = await req.json();
+  const { messages, cardId }: { messages: UIMessage[]; cardId: string } = 
+    await req.json();
+
+  // Fetch business context from database
+  const [card] = await db
+    .select()
+    .from(cards)
+    .where(eq(cards.id, cardId))
+    .limit(1);
+
+  const [twin] = await db
+    .select()
+    .from(cardDigitalTwins)
+    .where(eq(cardDigitalTwins.cardId, cardId))
+    .limit(1);
+
+  const businessProducts = await db
+    .select()
+    .from(products)
+    .where(eq(products.cardId, cardId));
+
+  const activeOffers = await db
+    .select()
+    .from(promotions)
+    .where(eq(promotions.cardId, cardId));
 
   const openrouter = createOpenRouter({
     apiKey: process.env.OPENROUTER_API_KEY,
   });
 
+  const systemPrompt = `You are the Digital Twin AI for "${card.businessName}".
+
+PERSONALITY:
+${twin?.personalityTraits ? JSON.stringify(twin.personalityTraits) : "Friendly and helpful"}
+
+BUSINESS INFO:
+- Industry: ${card.industryType}
+- Description: ${card.description}
+- Location: ${card.address ? JSON.stringify(card.address) : "Not specified"}
+
+PRODUCTS/SERVICES:
+${businessProducts.map(p => `- ${p.name}: $${p.price} - ${p.description}`).join('\n')}
+
+CURRENT OFFERS:
+${activeOffers.map(o => `- ${o.promotionType}: ${o.discountValue}% off`).join('\n')}
+
+GUIDELINES:
+- Be friendly and represent the business authentically
+- Keep responses concise (under 150 words)
+- Promote current offers when relevant
+- If asked something you don't know, offer to connect them with the business owner
+- Never make up information about products or prices`;
+
   const result = streamText({
-    model: openrouter(process.env.OPENROUTER_MODEL || "openai/gpt-5-mini"),
+    model: openrouter(process.env.OPENROUTER_MODEL || "anthropic/claude-3.5-sonnet"),
+    system: systemPrompt,
     messages: convertToModelMessages(messages),
     tools: {
-      weather: tool({
-        description: "Get the weather in a location (fahrenheit)",
+      getOffers: tool({
+        description: "Get current active offers and deals for this business",
+        inputSchema: z.object({}),
+        execute: async () => {
+          return activeOffers.map(o => ({
+            type: o.promotionType,
+            discount: o.discountValue,
+            conditions: o.conditions,
+            endsAt: o.endDate,
+          }));
+        },
+      }),
+      getProducts: tool({
+        description: "Get list of products or services offered",
         inputSchema: z.object({
-          location: z.string().describe("The location to get the weather for"),
+          category: z.string().optional().describe("Filter by category"),
         }),
-        execute: async ({ location }) => {
-          const temperature = Math.round(Math.random() * (90 - 32) + 32);
+        execute: async ({ category }) => {
+          let filtered = businessProducts;
+          if (category) {
+            filtered = businessProducts.filter(p => 
+              p.category?.toLowerCase().includes(category.toLowerCase())
+            );
+          }
+          return filtered.map(p => ({
+            name: p.name,
+            price: p.price,
+            description: p.description,
+          }));
+        },
+      }),
+      bookAppointment: tool({
+        description: "Request to book an appointment or reservation",
+        inputSchema: z.object({
+          date: z.string().describe("Preferred date (e.g., 'tomorrow', 'next Monday')"),
+          time: z.string().describe("Preferred time"),
+          service: z.string().describe("Service or purpose of appointment"),
+          name: z.string().describe("Customer name"),
+          phone: z.string().optional().describe("Contact phone number"),
+        }),
+        execute: async ({ date, time, service, name, phone }) => {
+          // In production, trigger N8N workflow here
+          // await triggerN8NWorkflow('booking-request', { ... });
+          
           return {
-            location,
-            temperature,
+            status: "Booking request submitted",
+            message: `We'll contact you to confirm your ${service} appointment for ${date} at ${time}`,
+            reference: `BK-${Date.now()}`,
           };
         },
       }),
@@ -241,280 +191,362 @@ export async function POST(req: Request) {
 }
 ```
 
-In this updated code:
+---
 
-1. You import the `tool` function from the `ai` package and `z` from `zod` for schema validation.
-2. You define a `tools` object with a `weather` tool. This tool:
+## Client Component: Chat UI with Shadcn
 
-   - Has a description that helps the model understand when to use it.
-   - Defines `inputSchema` using a Zod schema, specifying that it requires a `location` string to execute this tool. The model will attempt to extract this input from the context of the conversation. If it can't, it will ask the user for the missing information.
-   - Defines an `execute` function that simulates getting weather data (in this case, it returns a random temperature). This is an asynchronous function running on the server so you can fetch real data from an external API.
-
-Now your chatbot can "fetch" weather information for any location the user asks about. When the model determines it needs to use the weather tool, it will generate a tool call with the necessary input. The `execute` function will then be automatically run, and the tool output will be added to the `messages` as a `tool` message.
-
-Try asking something like "What's the weather in New York?" and see how the model uses the new tool.
-
-Notice the blank response in the UI? This is because instead of generating a text response, the model generated a tool call. You can access the tool call and subsequent tool result on the client via the `tool-weather` part of the `message.parts` array.
-
-<Note>
-  Tool parts are always named `tool-{toolName}`, where `{toolName}` is the key
-  you used when defining the tool. In this case, since we defined the tool as
-  `weather`, the part type is `tool-weather`.
-</Note>
-
-### Update the UI
-
-To display the tool invocation in your UI, update your `app/page.tsx` file:
-
-```tsx filename="app/page.tsx" highlight="16-21"
+```tsx
+// components/twin-chat.tsx
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Loader2, Send, Bot, User } from "lucide-react";
 
-export default function Chat() {
+interface TwinChatProps {
+  cardId: string;
+  businessName: string;
+  businessLogo?: string;
+}
+
+export function TwinChat({ cardId, businessName, businessLogo }: TwinChatProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
-  const { messages, sendMessage } = useChat();
-  return (
-    <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
-      {messages.map((message) => (
-        <div key={message.id} className="whitespace-pre-wrap">
-          {message.role === "user" ? "User: " : "AI: "}
-          {message.parts.map((part, i) => {
-            switch (part.type) {
-              case "text":
-                return <div key={`${message.id}-${i}`}>{part.text}</div>;
-              case "tool-weather":
-                return (
-                  <pre key={`${message.id}-${i}`}>
-                    {JSON.stringify(part, null, 2)}
-                  </pre>
-                );
-            }
-          })}
-        </div>
-      ))}
+  
+  const { messages, sendMessage, isLoading, error } = useChat({
+    api: "/api/twin-chat",
+    body: { cardId },
+  });
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          sendMessage({ text: input });
-          setInput("");
-        }}
-      >
-        <input
-          className="fixed dark:bg-zinc-900 bottom-0 w-full max-w-md p-2 mb-8 border border-zinc-300 dark:border-zinc-800 rounded shadow-xl"
-          value={input}
-          placeholder="Say something..."
-          onChange={(e) => setInput(e.currentTarget.value)}
-        />
-      </form>
+  // Auto-scroll to bottom on new messages
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
+    sendMessage({ text: input });
+    setInput("");
+  };
+
+  return (
+    <Card className="w-full max-w-md mx-auto h-[600px] flex flex-col">
+      <CardHeader className="border-b">
+        <CardTitle className="flex items-center gap-2">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={businessLogo} alt={businessName} />
+            <AvatarFallback><Bot className="h-4 w-4" /></AvatarFallback>
+          </Avatar>
+          <span className="text-lg">{businessName}</span>
+          <span className="text-xs text-muted-foreground ml-auto">Digital Twin</span>
+        </CardTitle>
+      </CardHeader>
+
+      <CardContent className="flex-1 p-0">
+        <ScrollArea ref={scrollRef} className="h-full p-4">
+          {messages.length === 0 && (
+            <div className="text-center text-muted-foreground py-8">
+              <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Hi! I'm the Digital Twin for {businessName}.</p>
+              <p className="text-sm mt-2">Ask me about our products, offers, or book an appointment!</p>
+            </div>
+          )}
+          
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              className={`flex gap-3 mb-4 ${
+                message.role === "user" ? "justify-end" : "justify-start"
+              }`}
+            >
+              {message.role === "assistant" && (
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={businessLogo} />
+                  <AvatarFallback><Bot className="h-4 w-4" /></AvatarFallback>
+                </Avatar>
+              )}
+              
+              <div
+                className={`rounded-lg px-4 py-2 max-w-[80%] ${
+                  message.role === "user"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted"
+                }`}
+              >
+                {message.parts.map((part, i) => {
+                  switch (part.type) {
+                    case "text":
+                      return <p key={i} className="whitespace-pre-wrap">{part.text}</p>;
+                    case "tool-getOffers":
+                    case "tool-getProducts":
+                    case "tool-bookAppointment":
+                      return (
+                        <div key={i} className="text-xs bg-background/50 rounded p-2 mt-2">
+                          <span className="font-semibold">🔧 {part.type.replace('tool-', '')}</span>
+                          {part.result && (
+                            <pre className="mt-1 overflow-auto">
+                              {JSON.stringify(part.result, null, 2)}
+                            </pre>
+                          )}
+                        </div>
+                      );
+                    default:
+                      return null;
+                  }
+                })}
+              </div>
+              
+              {message.role === "user" && (
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
+                </Avatar>
+              )}
+            </div>
+          ))}
+          
+          {isLoading && (
+            <div className="flex gap-3 mb-4">
+              <Avatar className="h-8 w-8">
+                <AvatarFallback><Bot className="h-4 w-4" /></AvatarFallback>
+              </Avatar>
+              <div className="bg-muted rounded-lg px-4 py-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+              </div>
+            </div>
+          )}
+        </ScrollArea>
+      </CardContent>
+
+      <CardFooter className="border-t p-4">
+        {error && (
+          <p className="text-destructive text-sm mb-2 w-full">
+            Error: {error.message}
+          </p>
+        )}
+        <form onSubmit={handleSubmit} className="flex gap-2 w-full">
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask about products, offers, or book..."
+            disabled={isLoading}
+            className="flex-1"
+          />
+          <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+          </Button>
+        </form>
+      </CardFooter>
+    </Card>
+  );
+}
+```
+
+---
+
+## Usage Example
+
+```tsx
+// app/card/[id]/page.tsx
+import { TwinChat } from "@/components/twin-chat";
+import { db } from "@/lib/db";
+import { cards } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+
+export default async function CardPage({ params }: { params: { id: string } }) {
+  const [card] = await db
+    .select()
+    .from(cards)
+    .where(eq(cards.id, params.id))
+    .limit(1);
+
+  if (!card) {
+    return <div>Business not found</div>;
+  }
+
+  return (
+    <div className="container py-8">
+      <h1 className="text-2xl font-bold mb-4">{card.businessName}</h1>
+      
+      <TwinChat
+        cardId={card.id}
+        businessName={card.businessName}
+        businessLogo={card.logoUrl || undefined}
+      />
     </div>
   );
 }
 ```
 
-With this change, you're updating the UI to handle different message parts. For text parts, you display the text content as before. For weather tool invocations, you display a JSON representation of the tool call and its result.
+---
 
-Now, when you ask about the weather, you'll see the tool call and its result displayed in your chat interface.
+## Advanced: Multi-Step Tool Calls
 
-## Enabling Multi-Step Tool Calls
+Enable the AI to use multiple tools in sequence:
 
-You may have noticed that while the tool is now visible in the chat interface, the model isn't using this information to answer your original query. This is because once the model generates a tool call, it has technically completed its generation.
+```typescript
+// In your route handler, add:
+import { stepCountIs } from "ai";
 
-To solve this, you can enable multi-step tool calls using `stopWhen`. By default, `stopWhen` is set to `stepCountIs(1)`, which means generation stops after the first step when there are tool results. By changing this condition, you can allow the model to automatically send tool results back to itself to trigger additional generations until your specified stopping condition is met. In this case, you want the model to continue generating so it can use the weather tool results to answer your original question.
+const result = streamText({
+  model: openrouter(process.env.OPENROUTER_MODEL),
+  system: systemPrompt,
+  messages: convertToModelMessages(messages),
+  stopWhen: stepCountIs(5), // Allow up to 5 tool calls per response
+  tools: {
+    // ... your tools
+  },
+});
+```
 
-### Update Your Route Handler
+---
 
-Modify your `app/api/chat/route.ts` file to include the `stopWhen` condition:
+## Streaming with Custom Events
 
-```tsx filename="app/api/chat/route.ts"
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import {
-  streamText,
-  UIMessage,
-  convertToModelMessages,
-  tool,
-  stepCountIs,
-} from "ai";
-import { z } from "zod";
+Send custom events during streaming:
 
-export const maxDuration = 30;
+```typescript
+// app/api/twin-chat/route.ts
+import { createDataStreamResponse, streamText } from "ai";
 
 export async function POST(req: Request) {
-  const { messages }: { messages: UIMessage[] } = await req.json();
+  const { messages, cardId } = await req.json();
 
-  const openrouter = createOpenRouter({
-    apiKey: process.env.OPENROUTER_API_KEY,
-  });
+  return createDataStreamResponse({
+    execute: async (dataStream) => {
+      // Send initial context
+      dataStream.writeData({ type: 'business-loaded', cardId });
 
-  const result = streamText({
-    model: openrouter(process.env.OPENROUTER_MODEL || "openai/gpt-5-mini"),
-    messages: convertToModelMessages(messages),
-    stopWhen: stepCountIs(5),
-    tools: {
-      weather: tool({
-        description: "Get the weather in a location (fahrenheit)",
-        inputSchema: z.object({
-          location: z.string().describe("The location to get the weather for"),
-        }),
-        execute: async ({ location }) => {
-          const temperature = Math.round(Math.random() * (90 - 32) + 32);
-          return {
-            location,
-            temperature,
-          };
+      const result = streamText({
+        model: openrouter(process.env.OPENROUTER_MODEL),
+        messages: convertToModelMessages(messages),
+        onStepFinish: ({ toolResults }) => {
+          if (toolResults.length > 0) {
+            dataStream.writeData({ 
+              type: 'tool-executed', 
+              tools: toolResults.map(t => t.toolName) 
+            });
+          }
         },
-      }),
+      });
+
+      result.mergeIntoDataStream(dataStream);
     },
   });
-
-  return result.toUIMessageStreamResponse();
 }
 ```
 
-In this updated code:
+---
 
-1. You set `stopWhen` to be when `stepCountIs` 5, allowing the model to use up to 5 "steps" for any given generation.
-2. You add an `onStepFinish` callback to log any `toolResults` from each step of the interaction, helping you understand the model's tool usage. This means we can also delete the `toolCall` and `toolResult` `console.log` statements from the previous example.
+## Error Handling
 
-Head back to the browser and ask about the weather in a location. You should now see the model using the weather tool results to answer your question.
+```typescript
+// components/twin-chat.tsx
+const { messages, sendMessage, isLoading, error, reload } = useChat({
+  api: "/api/twin-chat",
+  body: { cardId },
+  onError: (error) => {
+    console.error("Chat error:", error);
+    // Show toast notification
+    toast({
+      title: "Connection Error",
+      description: "Failed to connect to Digital Twin. Please try again.",
+      variant: "destructive",
+    });
+  },
+});
 
-By setting `stopWhen: stepCountIs(5)`, you're allowing the model to use up to 5 "steps" for any given generation. This enables more complex interactions and allows the model to gather and process information over several steps if needed. You can see this in action by adding another tool to convert the temperature from Celsius to Fahrenheit.
+// In JSX, add retry button
+{error && (
+  <Button variant="outline" size="sm" onClick={() => reload()}>
+    Retry
+  </Button>
+)}
+```
 
-### Add another tool
+---
 
-Update your `app/api/chat/route.ts` file to add a new tool to convert the temperature from Fahrenheit to Celsius:
+## Performance Optimization
 
-```tsx filename="app/api/chat/route.ts" highlight="34-47"
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import {
-  streamText,
-  UIMessage,
-  convertToModelMessages,
-  tool,
-  stepCountIs,
-} from "ai";
-import { z } from "zod";
+### 1. Response Caching (for common questions)
+```typescript
+// Use Next.js caching for static business info
+const businessContext = await unstable_cache(
+  async () => getBusinessContext(cardId),
+  [`business-${cardId}`],
+  { revalidate: 300 } // 5 minutes
+)();
+```
 
-export const maxDuration = 30;
+### 2. Streaming Indicators
+```tsx
+// Show typing indicator immediately
+const [isTyping, setIsTyping] = useState(false);
 
-export async function POST(req: Request) {
-  const { messages }: { messages: UIMessage[] } = await req.json();
+useEffect(() => {
+  setIsTyping(isLoading && messages.length > 0);
+}, [isLoading, messages]);
+```
 
-  const openrouter = createOpenRouter({
-    apiKey: process.env.OPENROUTER_API_KEY,
+### 3. Optimistic Updates
+```tsx
+// Show user message immediately before API response
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  const userInput = input;
+  setInput(""); // Clear immediately
+  sendMessage({ text: userInput });
+};
+```
+
+---
+
+## Testing
+
+```typescript
+// __tests__/twin-chat.test.ts
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { TwinChat } from "@/components/twin-chat";
+
+// Mock the useChat hook
+jest.mock("@ai-sdk/react", () => ({
+  useChat: () => ({
+    messages: [],
+    sendMessage: jest.fn(),
+    isLoading: false,
+    error: null,
+  }),
+}));
+
+describe("TwinChat", () => {
+  it("renders welcome message when no messages", () => {
+    render(
+      <TwinChat 
+        cardId="test-id" 
+        businessName="Test Business" 
+      />
+    );
+    
+    expect(screen.getByText(/Digital Twin for Test Business/)).toBeInTheDocument();
   });
-
-  const result = streamText({
-    model: openrouter(process.env.OPENROUTER_MODEL || "openai/gpt-5-mini"),
-    messages: convertToModelMessages(messages),
-    stopWhen: stepCountIs(5),
-    tools: {
-      weather: tool({
-        description: "Get the weather in a location (fahrenheit)",
-        inputSchema: z.object({
-          location: z.string().describe("The location to get the weather for"),
-        }),
-        execute: async ({ location }) => {
-          const temperature = Math.round(Math.random() * (90 - 32) + 32);
-          return {
-            location,
-            temperature,
-          };
-        },
-      }),
-      convertFahrenheitToCelsius: tool({
-        description: "Convert a temperature in fahrenheit to celsius",
-        inputSchema: z.object({
-          temperature: z
-            .number()
-            .describe("The temperature in fahrenheit to convert"),
-        }),
-        execute: async ({ temperature }) => {
-          const celsius = Math.round((temperature - 32) * (5 / 9));
-          return {
-            celsius,
-          };
-        },
-      }),
-    },
-  });
-
-  return result.toUIMessageStreamResponse();
-}
+});
 ```
 
-### Update Your Frontend
+---
 
-update your `app/page.tsx` file to render the new temperature conversion tool:
+## Related Documentation
 
-```tsx filename="app/page.tsx" highlight="21"
-"use client";
-
-import { useChat } from "@ai-sdk/react";
-import { useState } from "react";
-
-export default function Chat() {
-  const [input, setInput] = useState("");
-  const { messages, sendMessage } = useChat();
-  return (
-    <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
-      {messages.map((message) => (
-        <div key={message.id} className="whitespace-pre-wrap">
-          {message.role === "user" ? "User: " : "AI: "}
-          {message.parts.map((part, i) => {
-            switch (part.type) {
-              case "text":
-                return <div key={`${message.id}-${i}`}>{part.text}</div>;
-              case "tool-weather":
-              case "tool-convertFahrenheitToCelsius":
-                return (
-                  <pre key={`${message.id}-${i}`}>
-                    {JSON.stringify(part, null, 2)}
-                  </pre>
-                );
-            }
-          })}
-        </div>
-      ))}
-
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          sendMessage({ text: input });
-          setInput("");
-        }}
-      >
-        <input
-          className="fixed dark:bg-zinc-900 bottom-0 w-full max-w-md p-2 mb-8 border border-zinc-300 dark:border-zinc-800 rounded shadow-xl"
-          value={input}
-          placeholder="Say something..."
-          onChange={(e) => setInput(e.currentTarget.value)}
-        />
-      </form>
-    </div>
-  );
-}
-```
-
-This update handles the new `tool-convertFahrenheitToCelsius` part type, displaying the temperature conversion tool calls and results in the UI.
-
-Now, when you ask "What's the weather in New York in celsius?", you should see a more complete interaction:
-
-1. The model will call the weather tool for New York.
-2. You'll see the tool output displayed.
-3. It will then call the temperature conversion tool to convert the temperature from Fahrenheit to Celsius.
-4. The model will then use that information to provide a natural language response about the weather in New York.
-
-This multi-step approach allows the model to gather information and use it to provide more accurate and contextual responses, making your chatbot considerably more useful.
-
-This simple example demonstrates how tools can expand your model's capabilities. You can create more complex tools to integrate with real APIs, databases, or any other external systems, allowing the model to access and process real-world data in real-time. Tools bridge the gap between the model's knowledge cutoff and current information.
-
-## Where to Next?
-
-You've built an AI chatbot using the AI SDK! From here, you have several paths to explore:
-
-- To learn more about the AI SDK, read through the [documentation](/docs).
-- If you're interested in diving deeper with guides, check out the [RAG (retrieval-augmented generation)](/docs/guides/rag-chatbot) and [multi-modal chatbot](/docs/guides/multi-modal-chatbot) guides.
-- To jumpstart your first AI project, explore available [templates](https://vercel.com/templates?type=ai).
+- [Structured Data Responses](/docs/technical/ai/structured-data.md)
+- [OpenRouter Models](https://openrouter.ai/models)
+- [Vercel AI SDK Docs](https://sdk.vercel.ai/docs)

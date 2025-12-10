@@ -1,0 +1,6 @@
+{"location":"scripts/debug-check.ts","message":"Starting debug check","data":{},"timestamp":1765405409930,"sessionId":"debug-session","hypothesisId":"init"}
+{"location":"scripts/debug-check.ts","message":".env file exists","data":{},"timestamp":1765405409948,"sessionId":"debug-session","hypothesisId":"H1"}
+{"location":"scripts/debug-check.ts","message":"Parsed env vars","data":{"keys":["POSTGRES_URL","BETTER_AUTH_SECRET","GOOGLE_CLIENT_ID","GOOGLE_CLIENT_SECRET","OPENROUTER_API_KEY","OPENROUTER_MODEL","OPENAI_EMBEDDING_MODEL","NEXT_PUBLIC_APP_URL","BLOB_READ_WRITE_TOKEN","POLAR_WEBHOOK_SECRET","POLAR_ACCESS_TOKEN"]},"timestamp":1765405409950,"sessionId":"debug-session","hypothesisId":"H2"}
+{"location":"scripts/debug-check.ts","message":"Attempting DB connection","data":{},"timestamp":1765405409953,"sessionId":"debug-session","hypothesisId":"H3"}
+{"location":"scripts/debug-check.ts","message":"DB connection failed","data":{"error":"write CONNECT_TIMEOUT localhost:5433"},"timestamp":1765405414957,"sessionId":"debug-session","hypothesisId":"H3"}
+{"location":"scripts/debug-check.ts","message":"BETTER_AUTH_SECRET present","data":{},"timestamp":1765405414959,"sessionId":"debug-session","hypothesisId":"H4"}

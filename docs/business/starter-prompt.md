@@ -1,94 +1,215 @@
-I'm working with an agentic coding boilerplate project that includes authentication, database integration, and AI capabilities. Here's what's already set up:
+# LocalLoop Business Starter Prompt
 
-## Current Agentic Coding Boilerplate Structure
+> **Purpose:** Quick onboarding guide for business owners and stakeholders
+> **Audience:** Non-technical business users, product managers, stakeholders
 
-- **Authentication**: Better Auth with Google OAuth integration
-- **Database**: Drizzle ORM with PostgreSQL setup
-- **AI Integration**: Vercel AI SDK with OpenAI integration
-- **UI**: shadcn/ui components with Tailwind CSS
-- **Current Routes**:
-  - `/` - Home page with setup instructions and feature overview
-  - `/dashboard` - Protected dashboard page (requires authentication)
-  - `/chat` - AI chat interface (requires OpenAI API key)
+---
 
-## Important Context
+## 🌐 What is LocalLoop?
 
-This is an **agentic coding boilerplate/starter template** - all existing pages and components are meant to be examples and should be **completely replaced** to build the actual AI-powered application.
+LocalLoop is a **next-generation location-based business discovery platform** that combines:
 
-### CRITICAL: You MUST Override All Boilerplate Content
+- **Hybrid Business Cards**: AI-powered digital business cards with loyalty rewards
+- **Digital Twin Technology**: AI personas for each business that learn and interact
+- **Voice-Enabled Interface**: Natural language interactions ("Hey Looper")
+- **Waze-Style Community**: Real-time alerts, deals, and navigation
+- **Groupon-Style Deals**: Time-limited offers and group buying
 
-**DO NOT keep any boilerplate components, text, or UI elements unless explicitly requested.** This includes:
+---
 
-- **Remove all placeholder/demo content** (setup checklists, welcome messages, boilerplate text)
-- **Replace the entire navigation structure** - don't keep the existing site header or nav items
-- **Override all page content completely** - don't append to existing pages, replace them entirely
-- **Remove or replace all example components** (setup-checklist, starter-prompt-modal, etc.)
-- **Replace placeholder routes and pages** with the actual application functionality
+## 🎯 Core Value Proposition
 
-### Required Actions:
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                     LocalLoop Ecosystem                              │
+├─────────────────────────────────────────────────────────────────────┤
+│  🎯 ChatGPT-Style Search  →  "Find blow dry near me!"               │
+│  🗺️ Waze-Style Alerts     →  "Bucket List Item Ahead!"              │
+│  💰 Groupon-Style Deals   →  "50% OFF - 2 hours left!"              │
+│  🤖 Digital Twin AI       →  Personalized business interactions      │
+│  🎤 Voice Commands        →  "Hey Looper, show my offers"           │
+└─────────────────────────────────────────────────────────────────────┘
+```
 
-1. **Start Fresh**: Treat existing components as temporary scaffolding to be removed
-2. **Complete Replacement**: Build the new application from scratch using the existing tech stack
-3. **No Hybrid Approach**: Don't try to integrate new features alongside existing boilerplate content
-4. **Clean Slate**: The final application should have NO trace of the original boilerplate UI or content
+---
 
-The only things to preserve are:
+## 💼 Business Features Overview
 
-- **All installed libraries and dependencies** (DO NOT uninstall or remove any packages from package.json)
-- **Authentication system** (but customize the UI/flow as needed)
-- **Database setup and schema** (but modify schema as needed for your use case)
-- **Core configuration files** (next.config.ts, tsconfig.json, tailwind.config.ts, etc.)
-- **Build and development scripts** (keep all npm/pnpm scripts in package.json)
+### For Business Owners
 
-## Tech Stack
+| Feature | Description | Benefit |
+|---------|-------------|---------|
+| **Digital Business Card** | Interactive profile with branding | Professional online presence |
+| **Verified Badge** | KYC verification system | Build customer trust |
+| **Offer Management** | Create deals, discounts, flash sales | Drive foot traffic |
+| **Analytics Dashboard** | Track views, followers, redemptions | Data-driven decisions |
+| **Digital Twin AI** | AI persona representing your business | 24/7 customer engagement |
+| **Voice Commands** | Manage business hands-free | Save time |
 
-- Next.js 16 with App Router
-- TypeScript
-- Tailwind CSS
-- Better Auth for authentication
-- Drizzle ORM + PostgreSQL
-- Vercel AI SDK
-- shadcn/ui components
-- Lucide React icons
+### For Customers
 
-## Component Development Guidelines
+| Feature | Description | Benefit |
+|---------|-------------|---------|
+| **Voice Search** | "Find coffee shops near me" | Effortless discovery |
+| **Community Deals** | Group discounts, flash sales | Save money |
+| **Follow Businesses** | Get updates and exclusive offers | Stay informed |
+| **Bucket List** | Save places to visit | Never forget |
+| **Navigation** | Waze-style directions | Easy to find |
+| **VIP Rewards** | Loyalty tokens and perks | Get rewarded |
 
-**Always prioritize shadcn/ui components** when building the application:
+---
 
-1. **First Choice**: Use existing shadcn/ui components from the project
-2. **Second Choice**: Install additional shadcn/ui components using `pnpm dlx shadcn@latest add <component-name>`
-3. **Last Resort**: Only create custom components or use other libraries if shadcn/ui doesn't provide a suitable option
+## 🚀 User Journey: Business Owner
 
-The project already includes several shadcn/ui components (button, dialog, avatar, etc.) and follows their design system. Always check the [shadcn/ui documentation](https://ui.shadcn.com/docs/components) for available components before implementing alternatives.
+### Step 1: Claim Your Business
+```
+1. Search for your business on the map
+2. Click "Claim Business"
+3. Verify phone number (OTP)
+4. Upload KYC documents (business license, ID)
+5. Wait for approval (24-48 hours)
+```
 
-## What I Want to Build
+### Step 2: Set Up Your Card
+```
+1. Add logo and brand colors
+2. Write business description (or use AI)
+3. Add contact info and social links
+4. Set your location on the map
+5. Add products/services
+```
 
-Basic todo list app with the ability for users to add, remove, update, complete and view todos.
+### Step 3: Create Your First Offer
+```
+1. Click "Create Offer"
+2. Choose type: Percentage, Fixed, BOGO, VIP
+3. Set discount amount and conditions
+4. Set expiry date
+5. Publish!
+```
 
-## Request
+### Step 4: Engage Customers
+```
+1. Your Digital Twin handles initial conversations
+2. Respond to messages and reviews
+3. Track analytics on your dashboard
+4. Create new offers based on data
+```
 
-Please help me transform this boilerplate into my actual application. **You MUST completely replace all existing boilerplate code** to match my project requirements. The current implementation is just temporary scaffolding that should be entirely removed and replaced.
+---
 
-## Final Reminder: COMPLETE REPLACEMENT REQUIRED
+## 🗣️ Voice Command Examples
 
-🚨 **IMPORTANT**: Do not preserve any of the existing boilerplate UI, components, or content. The user expects a completely fresh application that implements their requirements from scratch. Any remnants of the original boilerplate (like setup checklists, welcome screens, demo content, or placeholder navigation) indicate incomplete implementation.
+### Business Owner Commands
+```
+"Hey Looper, show my analytics"
+"Hey Looper, create a 20% off deal for today"
+"Hey Looper, how many followers do I have?"
+"Hey Looper, post a new job listing"
+"Hey Looper, what's my best selling product?"
+```
 
-**Success Criteria**: The final application should look and function as if it was built from scratch for the specific use case, with no evidence of the original boilerplate template.
+### Customer Commands
+```
+"Hey Looper, find coffee near me"
+"Hey Looper, what deals are happening now?"
+"Hey Looper, follow Coastal Bites"
+"Hey Looper, navigate to the closest pizza place"
+"Hey Looper, add this to my bucket list"
+```
 
-## Post-Implementation Documentation
+---
 
-After completing the implementation, you MUST document any new features or significant changes in the `/docs/features/` directory:
+## 📊 Deal Types Explained
 
-1. **Create Feature Documentation**: For each major feature implemented, create a markdown file in `/docs/features/` that explains:
+### Percentage Discount
+- **Example:** "20% off all lattes"
+- **Best for:** Driving volume, clearing inventory
 
-   - What the feature does
-   - How it works
-   - Key components and files involved
-   - Usage examples
-   - Any configuration or setup required
+### Fixed Amount Discount
+- **Example:** "$10 off orders over $50"
+- **Best for:** Higher-value purchases
 
-2. **Update Existing Documentation**: If you modify existing functionality, update the relevant documentation files to reflect the changes.
+### BOGO (Buy One Get One)
+- **Example:** "Buy 1 coffee, get 1 free"
+- **Best for:** Introducing new products
 
-3. **Document Design Decisions**: Include any important architectural or design decisions made during implementation.
+### VIP Exclusive
+- **Example:** "VIP Members: 30% off everything"
+- **Best for:** Rewarding loyal customers
 
-This documentation helps maintain the project and assists future developers working with the codebase.
+### Community Deal
+- **Example:** "10 neighbors sign up = 50% off for all"
+- **Best for:** Viral growth, neighborhood buzz
+
+---
+
+## 📈 Success Metrics
+
+### Track These KPIs
+- **Card Views**: How many people see your business
+- **Followers**: Your loyal customer base
+- **Offer Redemptions**: Deals actually used
+- **Digital Twin Conversations**: Customer engagement
+- **Reviews & Ratings**: Reputation score
+
+### Benchmark Targets
+| Metric | Good | Great | Excellent |
+|--------|------|-------|-----------|
+| Card Views/week | 100+ | 500+ | 1000+ |
+| Follower Growth | 5%/mo | 10%/mo | 20%/mo |
+| Offer Redemption | 10% | 20% | 30%+ |
+| Response Rate | 50% | 75% | 90%+ |
+
+---
+
+## 💡 Best Practices
+
+### Creating Effective Offers
+1. **Be specific**: "20% off lattes" beats "discount on drinks"
+2. **Add urgency**: "Today only!" or "2 hours left!"
+3. **Make it shareable**: Easy for customers to tell friends
+4. **Track results**: See what works, repeat it
+
+### Optimizing Your Digital Twin
+1. **Set personality**: Friendly? Professional? Quirky?
+2. **Add knowledge**: Products, hours, FAQs
+3. **Review conversations**: Learn what customers ask
+4. **Update regularly**: Keep info current
+
+### Growing Your Followers
+1. **Promote your card**: Share QR code in-store
+2. **Exclusive offers**: Followers-only deals
+3. **Engage regularly**: Post updates, respond to messages
+4. **Cross-promote**: Link from social media
+
+---
+
+## 🆘 Getting Help
+
+### Support Channels
+- **In-App Chat**: Click the help icon
+- **Email**: support@localloop.ai
+- **Voice**: "Hey Looper, I need help"
+
+### Common Issues
+- **Can't claim business?** → Check your documents match
+- **Offer not showing?** → Verify it's not expired
+- **Twin not responding?** → Check your internet connection
+
+---
+
+## 📅 Onboarding Timeline
+
+| Day | Task | Time |
+|-----|------|------|
+| 1 | Claim & verify business | 15 min |
+| 1-2 | KYC review (wait) | 24-48 hrs |
+| 3 | Set up card & branding | 30 min |
+| 3 | Create first offer | 10 min |
+| 4+ | Engage & optimize | Ongoing |
+
+---
+
+> **Need the technical implementation?**  
+> See `/docs/technical/` for developer documentation.

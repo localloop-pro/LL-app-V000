@@ -1,123 +1,513 @@
-# react-markdown
+# React Markdown Rendering
 
-React component to render markdown.
+> **Stack:** Next.js 14+ + react-markdown + Shadcn
+> **Purpose:** Render AI-generated markdown content beautifully
 
-## Contents
+---
 
-- [Install](#install)
-- [Use](#use)
-- [API](#api)
-- [Examples](#examples)
-- [Plugins](#plugins)
+## Overview
 
-## What is this?
+When AI generates markdown content (Digital Twin responses, generated descriptions, etc.), we need to render it properly with consistent styling that matches the Shadcn design system.
 
-This package is a React component that can be given a string of markdown that it'll safely render to React elements. You can pass plugins to change how markdown is transformed and pass components that will be used instead of normal HTML elements.
+---
 
-## Install
+## Dependencies
 
-```sh
-npm install react-markdown
+```bash
+pnpm add react-markdown remark-gfm rehype-highlight rehype-sanitize
 ```
 
-## Use
+---
 
-Basic usage:
+## Basic Markdown Component
 
-```js
-import Markdown from "react-markdown";
+```tsx
+// components/markdown.tsx
+"use client";
 
-const markdown = "# Hi, *Pluto*!";
-
-<Markdown>{markdown}</Markdown>
-```
-
-With plugins:
-
-```js
-import Markdown from "react-markdown";
+import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
+import rehypeSanitize from "rehype-sanitize";
+import { cn } from "@/lib/utils";
 
-const markdown = `Just a link: www.nasa.gov.`;
+interface MarkdownProps {
+  content: string;
+  className?: string;
+}
 
-<Markdown remarkPlugins={[remarkGfm]}>{markdown}</Markdown>
+export function Markdown({ content, className }: MarkdownProps) {
+  return (
+    <ReactMarkdown
+      className={cn("prose prose-sm dark:prose-invert max-w-none", className)}
+      remarkPlugins={[remarkGfm]}
+      rehypePlugins={[rehypeHighlight, rehypeSanitize]}
+      components={{
+        // Custom heading styles
+        h1: ({ children }) => (
+          <h1 className="text-2xl font-bold mt-6 mb-4">{children}</h1>
+        ),
+        h2: ({ children }) => (
+          <h2 className="text-xl font-semibold mt-5 mb-3">{children}</h2>
+        ),
+        h3: ({ children }) => (
+          <h3 className="text-lg font-medium mt-4 mb-2">{children}</h3>
+        ),
+        
+        // Paragraph
+        p: ({ children }) => (
+          <p className="mb-4 leading-relaxed">{children}</p>
+        ),
+        
+        // Lists
+        ul: ({ children }) => (
+          <ul className="list-disc list-inside mb-4 space-y-1">{children}</ul>
+        ),
+        ol: ({ children }) => (
+          <ol className="list-decimal list-inside mb-4 space-y-1">{children}</ol>
+        ),
+        li: ({ children }) => (
+          <li className="text-sm">{children}</li>
+        ),
+        
+        // Links
+        a: ({ href, children }) => (
+          <a
+            href={href}
+            className="text-primary hover:underline"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {children}
+          </a>
+        ),
+        
+        // Code blocks
+        code: ({ inline, className, children }) => {
+          if (inline) {
+            return (
+              <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">
+                {children}
+              </code>
+            );
+          }
+          return (
+            <code className={cn("block bg-muted p-4 rounded-lg overflow-x-auto", className)}>
+              {children}
+            </code>
+          );
+        },
+        pre: ({ children }) => (
+          <pre className="bg-muted rounded-lg overflow-x-auto mb-4">
+            {children}
+          </pre>
+        ),
+        
+        // Blockquotes
+        blockquote: ({ children }) => (
+          <blockquote className="border-l-4 border-primary pl-4 italic my-4 text-muted-foreground">
+            {children}
+          </blockquote>
+        ),
+        
+        // Tables
+        table: ({ children }) => (
+          <div className="overflow-x-auto mb-4">
+            <table className="min-w-full divide-y divide-border">
+              {children}
+            </table>
+          </div>
+        ),
+        thead: ({ children }) => (
+          <thead className="bg-muted">{children}</thead>
+        ),
+        th: ({ children }) => (
+          <th className="px-4 py-2 text-left text-sm font-semibold">{children}</th>
+        ),
+        td: ({ children }) => (
+          <td className="px-4 py-2 text-sm border-t">{children}</td>
+        ),
+        
+        // Horizontal rule
+        hr: () => <hr className="my-6 border-border" />,
+        
+        // Strong/Bold
+        strong: ({ children }) => (
+          <strong className="font-semibold">{children}</strong>
+        ),
+        
+        // Emphasis/Italic
+        em: ({ children }) => (
+          <em className="italic">{children}</em>
+        ),
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+}
 ```
 
-## API
+---
 
-Key props:
+## Streaming Markdown (for AI responses)
 
-- `children` — markdown string to render
-- `remarkPlugins` — array of remark plugins
-- `rehypePlugins` — array of rehype plugins  
-- `components` — object mapping HTML tags to React components
-- `allowedElements` — array of allowed HTML tags
-- `disallowedElements` — array of disallowed HTML tags
+```tsx
+// components/streaming-markdown.tsx
+"use client";
 
-## Examples
+import { useEffect, useState } from "react";
+import { Markdown } from "./markdown";
+import { cn } from "@/lib/utils";
 
-### Using GitHub Flavored Markdown
+interface StreamingMarkdownProps {
+  content: string;
+  isStreaming?: boolean;
+  className?: string;
+}
 
-```js
-import Markdown from "react-markdown";
+export function StreamingMarkdown({ 
+  content, 
+  isStreaming = false,
+  className 
+}: StreamingMarkdownProps) {
+  const [displayedContent, setDisplayedContent] = useState(content);
+
+  useEffect(() => {
+    setDisplayedContent(content);
+  }, [content]);
+
+  return (
+    <div className={cn("relative", className)}>
+      <Markdown content={displayedContent} />
+      
+      {isStreaming && (
+        <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-1" />
+      )}
+    </div>
+  );
+}
+```
+
+---
+
+## Chat Message with Markdown
+
+```tsx
+// components/chat-message.tsx
+"use client";
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Markdown } from "@/components/markdown";
+import { cn } from "@/lib/utils";
+import { Bot, User } from "lucide-react";
+
+interface ChatMessageProps {
+  role: "user" | "assistant";
+  content: string;
+  avatarUrl?: string;
+  timestamp?: Date;
+}
+
+export function ChatMessage({ role, content, avatarUrl, timestamp }: ChatMessageProps) {
+  const isUser = role === "user";
+
+  return (
+    <div className={cn("flex gap-3", isUser ? "justify-end" : "justify-start")}>
+      {!isUser && (
+        <Avatar className="h-8 w-8">
+          <AvatarImage src={avatarUrl} />
+          <AvatarFallback>
+            <Bot className="h-4 w-4" />
+          </AvatarFallback>
+        </Avatar>
+      )}
+      
+      <div
+        className={cn(
+          "rounded-lg px-4 py-2 max-w-[80%]",
+          isUser 
+            ? "bg-primary text-primary-foreground" 
+            : "bg-muted"
+        )}
+      >
+        {isUser ? (
+          <p className="whitespace-pre-wrap">{content}</p>
+        ) : (
+          <Markdown 
+            content={content} 
+            className={cn(
+              "prose-sm",
+              "prose-p:mb-2 prose-p:last:mb-0",
+              "prose-ul:my-2 prose-ol:my-2",
+              "prose-li:my-0"
+            )}
+          />
+        )}
+        
+        {timestamp && (
+          <span className="text-xs opacity-50 mt-1 block">
+            {timestamp.toLocaleTimeString()}
+          </span>
+        )}
+      </div>
+      
+      {isUser && (
+        <Avatar className="h-8 w-8">
+          <AvatarFallback>
+            <User className="h-4 w-4" />
+          </AvatarFallback>
+        </Avatar>
+      )}
+    </div>
+  );
+}
+```
+
+---
+
+## Code Block with Copy Button
+
+```tsx
+// components/code-block.tsx
+"use client";
+
+import { useState } from "react";
+import { Check, Copy } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+interface CodeBlockProps {
+  code: string;
+  language?: string;
+  className?: string;
+}
+
+export function CodeBlock({ code, language, className }: CodeBlockProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className={cn("relative group", className)}>
+      <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-8 w-8"
+          onClick={handleCopy}
+        >
+          {copied ? (
+            <Check className="h-4 w-4 text-green-500" />
+          ) : (
+            <Copy className="h-4 w-4" />
+          )}
+        </Button>
+      </div>
+      
+      {language && (
+        <div className="absolute left-2 top-2 text-xs text-muted-foreground">
+          {language}
+        </div>
+      )}
+      
+      <pre className="bg-muted rounded-lg p-4 pt-8 overflow-x-auto">
+        <code className="text-sm font-mono">{code}</code>
+      </pre>
+    </div>
+  );
+}
+```
+
+---
+
+## Enhanced Markdown with Code Blocks
+
+```tsx
+// components/enhanced-markdown.tsx
+"use client";
+
+import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { CodeBlock } from "./code-block";
+import { cn } from "@/lib/utils";
 
-const markdown = `
-* [x] todo
-* [ ] done
+interface EnhancedMarkdownProps {
+  content: string;
+  className?: string;
+}
 
-| Column 1 | Column 2 |
-|----------|----------|
-| Cell 1   | Cell 2   |
-`;
-
-<Markdown remarkPlugins={[remarkGfm]}>{markdown}</Markdown>
+export function EnhancedMarkdown({ content, className }: EnhancedMarkdownProps) {
+  return (
+    <ReactMarkdown
+      className={cn("prose prose-sm dark:prose-invert max-w-none", className)}
+      remarkPlugins={[remarkGfm]}
+      components={{
+        code: ({ inline, className, children }) => {
+          const match = /language-(\w+)/.exec(className || "");
+          const code = String(children).replace(/\n$/, "");
+          
+          if (!inline && match) {
+            return <CodeBlock code={code} language={match[1]} />;
+          }
+          
+          if (!inline) {
+            return <CodeBlock code={code} />;
+          }
+          
+          return (
+            <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">
+              {children}
+            </code>
+          );
+        },
+        pre: ({ children }) => <>{children}</>,
+        // ... other component overrides
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+}
 ```
 
-### Custom Components (Syntax Highlighting)
+---
 
-```js
-import Markdown from "react-markdown";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { dark } from "react-syntax-highlighter/dist/esm/styles/prism";
+## Usage in Digital Twin Chat
 
-const markdown = `
-\`\`\`js
-console.log('Hello, world!');
-\`\`\`
-`;
+```tsx
+// components/twin-chat.tsx
+import { ChatMessage } from "@/components/chat-message";
 
-<Markdown
-  components={{
-    code(props) {
-      const { children, className, ...rest } = props;
-      const match = /language-(\w+)/.exec(className || "");
-      return match ? (
-        <SyntaxHighlighter
-          {...rest}
-          PreTag="div"
-          children={String(children).replace(/\n$/, "")}
-          language={match[1]}
-          style={dark}
+export function TwinChat({ cardId, businessName, businessLogo }) {
+  const { messages, sendMessage, isLoading } = useChat({
+    api: "/api/twin-chat",
+    body: { cardId },
+  });
+
+  return (
+    <div className="space-y-4">
+      {messages.map((message) => (
+        <ChatMessage
+          key={message.id}
+          role={message.role}
+          content={
+            message.parts
+              .filter((p) => p.type === "text")
+              .map((p) => p.text)
+              .join("")
+          }
+          avatarUrl={message.role === "assistant" ? businessLogo : undefined}
         />
-      ) : (
-        <code {...rest} className={className}>
-          {children}
-        </code>
-      );
-    },
-  }}
->
-  {markdown}
-</Markdown>
+      ))}
+    </div>
+  );
+}
 ```
 
-## Plugins
+---
 
-Common plugins:
+## Business Description Display
 
-- `remark-gfm` — GitHub Flavored Markdown (tables, task lists, strikethrough)
-- `remark-math` — Math notation support
-- `rehype-katex` — Render math with KaTeX
-- `rehype-highlight` — Syntax highlighting
-- `rehype-raw` — Allow raw HTML (use carefully for security)
+```tsx
+// components/business-description.tsx
+import { Markdown } from "@/components/markdown";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+interface BusinessDescriptionProps {
+  description: string;
+  businessName: string;
+}
+
+export function BusinessDescription({ description, businessName }: BusinessDescriptionProps) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>About {businessName}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Markdown 
+          content={description} 
+          className="prose-p:text-muted-foreground"
+        />
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+---
+
+## Sanitization for User Content
+
+Always sanitize user-generated or AI-generated content:
+
+```tsx
+// components/safe-markdown.tsx
+import ReactMarkdown from "react-markdown";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
+
+// Custom schema that allows safe elements only
+const sanitizeSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    // Allow class on code for syntax highlighting
+    code: ["className"],
+    // Allow href on links but only http/https
+    a: ["href"],
+  },
+  protocols: {
+    href: ["http", "https", "mailto"],
+  },
+};
+
+export function SafeMarkdown({ content }: { content: string }) {
+  return (
+    <ReactMarkdown
+      rehypePlugins={[[rehypeSanitize, sanitizeSchema]]}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+}
+```
+
+---
+
+## Syntax Highlighting Theme
+
+Add to your global CSS:
+
+```css
+/* styles/highlight.css */
+@import "highlight.js/styles/github-dark.css";
+
+/* Or for light/dark mode support */
+.dark pre code {
+  /* dark theme overrides */
+}
+
+pre code {
+  /* light theme */
+}
+```
+
+Import in your layout:
+
+```tsx
+// app/layout.tsx
+import "@/styles/highlight.css";
+```
+
+---
+
+## Related Documentation
+
+- [AI Streaming](/docs/technical/ai/streaming.md)
+- [react-markdown](https://github.com/remarkjs/react-markdown)
+- [Shadcn Typography](https://ui.shadcn.com/docs/components/typography)
