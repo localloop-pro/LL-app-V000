@@ -55,3 +55,5 @@ export const kycDocuments = pgTable(
     index("kyc_documents_status_idx").on(table.status),
   ]
 );
+
+

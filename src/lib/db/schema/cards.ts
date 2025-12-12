@@ -88,3 +88,5 @@ export const promotions = pgTable(
     index("promotions_is_active_idx").on(table.isActive),
   ]
 );
+
+

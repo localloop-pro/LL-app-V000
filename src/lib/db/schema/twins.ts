@@ -24,3 +24,5 @@ export const cardDigitalTwins = pgTable(
     index("card_digital_twins_is_active_idx").on(table.isActive),
   ]
 );
+
+

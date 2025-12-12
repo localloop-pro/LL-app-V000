@@ -67,3 +67,5 @@ export const subscriptions = pgTable(
     index("subscriptions_product_id_idx").on(table.productId),
   ]
 );
+
+

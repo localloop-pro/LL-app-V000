@@ -93,3 +93,5 @@ export const bucketListItems = pgTable(
     index("bucket_list_items_user_card_idx").on(table.userId, table.cardId), // Unique constraint via application logic
   ]
 );
+
+
