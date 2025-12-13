@@ -109,10 +109,15 @@ type TextPart = { type?: string; text?: string };
 type MaybePartsMessage = {
   display?: ReactNode;
   parts?: TextPart[];
-  content?: TextPart[];
+  content?: TextPart[] | string;
+  text?: string;
 };
 
 function getMessageText(message: MaybePartsMessage): string {
+  // Handle legacy/simple message shapes first
+  if (typeof message.content === "string") return message.content;
+  if (typeof message.text === "string") return message.text;
+
   const parts = Array.isArray(message.parts)
     ? message.parts
     : Array.isArray(message.content)
@@ -126,6 +131,23 @@ function getMessageText(message: MaybePartsMessage): string {
 
 function renderMessageContent(message: MaybePartsMessage): ReactNode {
   if (message.display) return message.display;
+
+  // Support string content (common in some Vercel AI SDK message shapes / persisted messages)
+  if (typeof message.content === "string") {
+    return (
+      <ReactMarkdown components={markdownComponents}>
+        {message.content}
+      </ReactMarkdown>
+    );
+  }
+  if (typeof message.text === "string") {
+    return (
+      <ReactMarkdown components={markdownComponents}>
+        {message.text}
+      </ReactMarkdown>
+    );
+  }
+
   const parts = Array.isArray(message.parts)
     ? message.parts
     : Array.isArray(message.content)
@@ -197,36 +219,30 @@ export default function ChatPage() {
     },
   });
   const [input, setInput] = useState("");
-  const [isClient, setIsClient] = useState(false);
 
-  // Mark as client-side after hydration
+  // Load messages from localStorage on mount (runs client-side only)
   useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  // Load messages from localStorage on mount (client-side only)
-  useEffect(() => {
-    if (isClient) {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setMessages(parsed);
-          }
-        } catch {
-          // Invalid JSON, ignore
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMessages(parsed);
         }
+      } catch {
+        // Invalid JSON, ignore
       }
     }
-  }, [setMessages, isClient]);
+  }, [setMessages]);
 
-  // Save messages to localStorage when they change (client-side only)
+  // Save messages to localStorage when they change (runs client-side only)
   useEffect(() => {
-    if (isClient && messages.length > 0) {
+    if (messages.length > 0) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
     }
-  }, [messages, isClient]);
+  }, [messages]);
 
   const clearMessages = () => {
     setMessages([]);
@@ -326,7 +342,8 @@ export default function ChatPage() {
             e.preventDefault();
             const text = input.trim();
             if (!text) return;
-            sendMessage({ role: "user", parts: [{ type: "text", text }] });
+            // AI SDK recommended shape: let the hook create parts/messages for us.
+            sendMessage({ text });
             setInput("");
           }}
           className="flex gap-2"

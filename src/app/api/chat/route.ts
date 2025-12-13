@@ -4,6 +4,37 @@ import { streamText, UIMessage, convertToModelMessages } from "ai";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 
+function getOpenRouterFriendlyError(error: unknown): string {
+  // We intentionally keep this user-facing and actionable (avoid dumping raw objects).
+  const anyErr = error as
+    | (Error & { statusCode?: number; responseBody?: string })
+    | { statusCode?: number; responseBody?: string }
+    | null
+    | undefined;
+
+  const statusCode = anyErr && typeof anyErr === "object" ? anyErr.statusCode : undefined;
+  const responseBody =
+    anyErr && typeof anyErr === "object" && typeof anyErr.responseBody === "string"
+      ? anyErr.responseBody
+      : undefined;
+
+  // OpenRouter commonly returns 401 with message "User not found." for invalid API keys.
+  if (statusCode === 401 || responseBody?.includes('"User not found"')) {
+    return [
+      "OpenRouter authentication failed (401).",
+      "Check your OPENROUTER_API_KEY in .env (it should start with 'sk-or-v1-'), then restart the dev server.",
+    ].join(" ");
+  }
+
+  if (statusCode === 429) {
+    return "OpenRouter rate limit hit (429). Please wait a bit and try again.";
+  }
+
+  if (anyErr instanceof Error) return anyErr.message;
+  if (typeof error === "string") return error;
+  return "Unknown AI error.";
+}
+
 // Zod schema for message validation
 const messagePartSchema = z.object({
   type: z.string(),
@@ -59,12 +90,26 @@ export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = parsed.data as { messages: UIMessage[] };
 
   // Initialize OpenRouter with API key from environment
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  const apiKey = process.env.OPENROUTER_API_KEY?.trim();
   if (!apiKey) {
-    return new Response(JSON.stringify({ error: "OpenRouter API key not configured" }), {
+    return new Response(JSON.stringify({ error: "OpenRouter API key not configured. Set OPENROUTER_API_KEY in .env" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
+  }
+
+  // Catch common misconfigurations early (prevents confusing OpenRouter 401s).
+  if (!apiKey.startsWith("sk-or-v1-") || apiKey.includes("your-key")) {
+    return new Response(
+      JSON.stringify({
+        error:
+          "Invalid OPENROUTER_API_KEY. Paste a real OpenRouter key (starts with 'sk-or-v1-') into your .env and restart the dev server.",
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   }
 
   const openrouter = createOpenRouter({ apiKey });
@@ -72,9 +117,20 @@ export async function POST(req: Request) {
   const result = streamText({
     model: openrouter(process.env.OPENROUTER_MODEL || "openai/gpt-5-mini"),
     messages: convertToModelMessages(messages),
+    onError({ error }) {
+      // streamText suppresses throws; log for server-side debugging.
+      console.error("[/api/chat] streamText error:", error);
+    },
   });
 
   return (
-    result as unknown as { toUIMessageStreamResponse: () => Response }
-  ).toUIMessageStreamResponse();
+    result as unknown as {
+      toUIMessageStreamResponse: (
+        options?: ResponseInit & { onError?: (error: unknown) => string }
+      ) => Response;
+    }
+  ).toUIMessageStreamResponse({
+    // Return a clearer message instead of the default masked one.
+    onError: getOpenRouterFriendlyError,
+  });
 }
