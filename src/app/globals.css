@@ -115,3 +115,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Next.js Dev Tools Portal Positioning Overrides */
+nextjs-portal {
+  left: auto !important;
+  top: auto !important;
+}

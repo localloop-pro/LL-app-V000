@@ -141,11 +141,12 @@ function renderMessageContent(message: MaybePartsMessage): ReactNode {
 }
 
 function formatTimestamp(date: Date): string {
-  return new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  }).format(date);
+  // Use a consistent format that's less likely to differ between server and client
+  const hours = date.getHours();
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const displayHours = hours % 12 || 12;
+  return `${displayHours}:${minutes} ${ampm}`;
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -196,10 +197,16 @@ export default function ChatPage() {
     },
   });
   const [input, setInput] = useState("");
+  const [isClient, setIsClient] = useState(false);
 
-  // Load messages from localStorage on mount
+  // Mark as client-side after hydration
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    setIsClient(true);
+  }, []);
+
+  // Load messages from localStorage on mount (client-side only)
+  useEffect(() => {
+    if (isClient) {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         try {
@@ -212,14 +219,14 @@ export default function ChatPage() {
         }
       }
     }
-  }, [setMessages]);
+  }, [setMessages, isClient]);
 
-  // Save messages to localStorage when they change
+  // Save messages to localStorage when they change (client-side only)
   useEffect(() => {
-    if (typeof window !== "undefined" && messages.length > 0) {
+    if (isClient && messages.length > 0) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
     }
-  }, [messages]);
+  }, [messages, isClient]);
 
   const clearMessages = () => {
     setMessages([]);
