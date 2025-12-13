@@ -5,6 +5,7 @@ export * from "./twins";
 export * from "./social";
 export * from "./payments";
 export * from "./kyc";
+export * from "./merchants";
 
 
 

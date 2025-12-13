@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Super Admin Dashboard - Geo-Management</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#15202b",
+                        "border-light": "#e2e8f0",
+                        "border-dark": "#2d3748",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom Scrollbar for cleaner look in high density dashboard */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 3px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #475569; 
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display h-screen flex overflow-hidden selection:bg-primary/20">
+<!-- Global Sidebar -->
+<aside class="w-64 bg-surface-light dark:bg-surface-dark border-r border-border-light dark:border-border-dark flex flex-col shrink-0 transition-colors duration-200 z-20">
+<!-- User Profile Header -->
+<div class="p-4 border-b border-border-light dark:border-border-dark">
+<div class="flex gap-3 items-center">
+<div class="bg-center bg-no-repeat bg-cover rounded-full h-10 w-10 shrink-0 border border-border-light dark:border-border-dark" data-alt="Avatar of the Super Admin user" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBHX_ITxwDlxkVdKNa2BHCMlWeKRjAoJl3pUNii0m_p3_EUDpvddVxBKFpCrBWAXSWd1c_BZH1uzFDVYRz6O8_CS_5I-bubdjXNclzrRmNSagfOE088qFDf85g-5Cn2o1PXqpf1eyu17n2053H3CLZJWZ1cMIHxVQNLBFihnmy3a0EXQZkwDfTE0NYTTld5Qc0DtRDMiQ3HYTZ6VhozWbFwwH3iRw9Pzu3cQpl1dnAD8072HlnTAwznxNcJN7KhzdE74aq5CgCPNo0");'></div>
+<div class="flex flex-col overflow-hidden">
+<h1 class="text-slate-900 dark:text-white text-sm font-semibold leading-tight truncate">Super Admin</h1>
+<p class="text-slate-500 dark:text-slate-400 text-xs font-normal leading-tight truncate">Global Controller</p>
+</div>
+</div>
+</div>
+<!-- Navigation Links -->
+<div class="flex flex-col gap-1 p-3 flex-1 overflow-y-auto">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary dark:text-primary" href="#">
+<span class="material-symbols-outlined text-[20px] fill-1">map</span>
+<span class="text-sm font-medium">Geo-Management</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">group</span>
+<span class="text-sm font-medium">Users</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">description</span>
+<span class="text-sm font-medium">Reports</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="text-sm font-medium">System Config</span>
+</a>
+</div>
+<!-- Bottom Actions -->
+<div class="p-3 border-t border-border-light dark:border-border-dark">
+<button class="flex items-center gap-3 px-3 py-2 w-full rounded-lg text-slate-600 dark:text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors">
+<span class="material-symbols-outlined text-[20px]">logout</span>
+<span class="text-sm font-medium">Logout</span>
+</button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col min-w-0">
+<!-- Top Bar: Breadcrumbs & Global Search Context -->
+<header class="h-14 bg-surface-light dark:bg-surface-dark border-b border-border-light dark:border-border-dark flex items-center px-6 justify-between shrink-0">
+<!-- Breadcrumbs -->
+<nav class="flex items-center gap-2 text-sm overflow-hidden whitespace-nowrap mask-linear">
+<a class="text-slate-500 dark:text-slate-400 hover:text-primary transition-colors" href="#">Australia</a>
+<span class="text-slate-400 dark:text-slate-600">/</span>
+<a class="text-slate-500 dark:text-slate-400 hover:text-primary transition-colors" href="#">NSW</a>
+<span class="text-slate-400 dark:text-slate-600">/</span>
+<a class="text-slate-500 dark:text-slate-400 hover:text-primary transition-colors" href="#">Sydney</a>
+<span class="text-slate-400 dark:text-slate-600">/</span>
+<span class="text-slate-900 dark:text-white font-semibold bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-xs">Bondi 2026</span>
+</nav>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="h-4 w-px bg-border-light dark:bg-border-dark"></div>
+<button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined">help</span>
+</button>
+</div>
+</header>
+<!-- Main Workspace Split -->
+<main class="flex-1 flex overflow-hidden">
+<!-- Geo-Hierarchy Explorer (Left Pane) -->
+<div class="w-64 bg-slate-50 dark:bg-[#0d141b] border-r border-border-light dark:border-border-dark flex flex-col shrink-0 hidden lg:flex">
+<div class="p-3 border-b border-border-light dark:border-border-dark flex justify-between items-center">
+<span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Hierarchy</span>
+<button class="text-slate-400 hover:text-primary"><span class="material-symbols-outlined text-[18px]">filter_list</span></button>
+</div>
+<div class="flex-1 overflow-y-auto p-2 text-sm">
+<!-- Tree Node -->
+<div class="pl-0">
+<div class="flex items-center gap-1 py-1.5 px-2 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded cursor-pointer">
+<span class="material-symbols-outlined text-[16px]">expand_more</span>
+<span class="material-symbols-outlined text-[16px] text-slate-400">public</span>
+<span>Australia</span>
+</div>
+<!-- Child Nodes -->
+<div class="pl-4 border-l border-border-light dark:border-border-dark ml-3">
+<div class="flex items-center gap-1 py-1.5 px-2 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded cursor-pointer">
+<span class="material-symbols-outlined text-[16px]">expand_more</span>
+<span>NSW</span>
+</div>
+<div class="pl-4 border-l border-border-light dark:border-border-dark ml-2">
+<div class="flex items-center gap-1 py-1.5 px-2 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded cursor-pointer">
+<span class="material-symbols-outlined text-[16px]">expand_more</span>
+<span>Sydney</span>
+</div>
+<div class="pl-4 border-l border-border-light dark:border-border-dark ml-2">
+<div class="flex items-center gap-1 py-1.5 px-2 text-primary bg-primary/10 rounded cursor-pointer font-medium">
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+<span>Bondi (2026)</span>
+</div>
+<div class="flex items-center gap-1 py-1.5 px-2 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded cursor-pointer">
+<span class="material-symbols-outlined text-[16px] opacity-0">location_on</span>
+<span>Bronte (2024)</span>
+</div>
+<div class="flex items-center gap-1 py-1.5 px-2 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded cursor-pointer">
+<span class="material-symbols-outlined text-[16px] opacity-0">location_on</span>
+<span>Coogee (2034)</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-1 py-1.5 px-2 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded cursor-pointer">
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span>Victoria</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Middle Content Area (Data Grid) -->
+<div class="flex-1 flex flex-col min-w-0 bg-background-light dark:bg-background-dark overflow-y-auto">
+<!-- Title & Context -->
+<div class="px-6 pt-6 pb-2">
+<h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Bondi (2026)</h1>
+<p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Manage merchants, deal approvals, and essay content for this region.</p>
+</div>
+<!-- Stats Row -->
+<div class="px-6 py-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg border border-border-light dark:border-border-dark flex flex-col shadow-sm">
+<span class="text-slate-500 dark:text-slate-400 text-sm font-medium flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Active Merchants
+                        </span>
+<span class="text-2xl font-bold text-slate-900 dark:text-white mt-1">142</span>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg border border-border-light dark:border-border-dark flex flex-col shadow-sm">
+<span class="text-slate-500 dark:text-slate-400 text-sm font-medium flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-amber-500"></span> Pending Approval
+                        </span>
+<span class="text-2xl font-bold text-slate-900 dark:text-white mt-1">3</span>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg border border-border-light dark:border-border-dark flex flex-col shadow-sm">
+<span class="text-slate-500 dark:text-slate-400 text-sm font-medium flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-red-500"></span> Open Tickets
+                        </span>
+<span class="text-2xl font-bold text-slate-900 dark:text-white mt-1">5</span>
+</div>
+</div>
+<!-- Toolbar -->
+<div class="px-6 pb-4 flex flex-col sm:flex-row gap-3 items-center justify-between">
+<!-- Search -->
+<div class="relative w-full sm:max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+<input class="w-full pl-10 pr-4 py-2.5 rounded-lg border-none bg-white dark:bg-surface-dark ring-1 ring-border-light dark:ring-border-dark focus:ring-2 focus:ring-primary text-sm text-slate-900 dark:text-white placeholder:text-slate-400 shadow-sm" placeholder="Search by Name, ID or Postcode..." type="text"/>
+</div>
+<!-- Filters & View Toggle -->
+<div class="flex gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0">
+<button class="flex items-center gap-2 px-3 py-2 bg-white dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px]">filter_list</span>
+                            Filter
+                        </button>
+<div class="h-9 w-px bg-border-light dark:bg-border-dark mx-1 self-center"></div>
+<div class="flex bg-white dark:bg-surface-dark rounded-lg border border-border-light dark:border-border-dark p-1 shadow-sm shrink-0">
+<button class="p-1.5 rounded bg-slate-100 dark:bg-slate-700 text-primary shadow-sm">
+<span class="material-symbols-outlined text-[20px] block">list</span>
+</button>
+<button class="p-1.5 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+<span class="material-symbols-outlined text-[20px] block">map</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Data Table -->
+<div class="flex-1 px-6 pb-6 overflow-hidden flex flex-col">
+<div class="bg-surface-light dark:bg-surface-dark rounded-lg border border-border-light dark:border-border-dark shadow-sm flex flex-col flex-1 overflow-hidden">
+<div class="overflow-auto flex-1">
+<table class="w-full text-left border-collapse">
+<thead class="bg-slate-50 dark:bg-slate-800/50 sticky top-0 z-10">
+<tr>
+<th class="p-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-border-light dark:border-border-dark">Merchant</th>
+<th class="p-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-border-light dark:border-border-dark">Status</th>
+<th class="p-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-border-light dark:border-border-dark">Active Deals</th>
+<th class="p-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-border-light dark:border-border-dark">Essay Status</th>
+<th class="p-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-border-light dark:border-border-dark">Support</th>
+<th class="p-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-border-light dark:border-border-dark text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-light dark:divide-border-dark">
+<!-- Row 1: Active Selected -->
+<tr class="bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer group">
+<td class="p-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-md bg-slate-200 dark:bg-slate-700 bg-cover bg-center" data-alt="Logo of Bondi Burger Joint" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB1GTUsa6A2pfE_gqVWhjfaL3rl6BupUkYmKfZKGZpUvdwBNEPaWWDeEHohBI-NoN_6UOIT8s03cNDVYAOzP1VCKu8i6lCvcTNLnLHQfBY-S39R5hZKCY5yU5GADZKdDi4tU2ce60qLsbYFiC6enyxv8iiy0J6sk4uvqETtm3lK1Ojsvm3WumV-WAuxlKvbasrPkZezGRrjN4MoEsRD43JAm2V-6Rxsf5HGryegB9l_jfO0tjVeI1sbboumGj2BEU3LeWD-GybzcJs");'></div>
+<div>
+<p class="text-sm font-semibold text-slate-900 dark:text-white">Bondi Burger Joint</p>
+<p class="text-xs text-slate-500 dark:text-slate-400">ID: #BND-8821</p>
+</div>
+</div>
+</td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Live
+                                            </span>
+</td>
+<td class="p-4 text-sm text-slate-700 dark:text-slate-300">
+                                            3 Active
+                                        </td>
+<td class="p-4">
+<span class="text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">Published</span>
+</td>
+<td class="p-4">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 flex items-center justify-center text-xs font-bold">1</span>
+<span class="text-xs text-slate-500 dark:text-slate-400">Ticket #402</span>
+</div>
+</td>
+<td class="p-4 text-right">
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer">
+<td class="p-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-md bg-slate-200 dark:bg-slate-700 bg-cover bg-center" data-alt="Logo of Surf Shop Co" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDNkUPwrsjyUiwmzsN3Org9eZZjdPC0Tg0aAYf0EZ57JqqS_hFD2wcRSpO38ajHrzJguSulLRDDLjgdLF3_lI4nv_f9gqis12zuwkM2fU9If5zTeZm37MKoxCvGGxpbcuM9mFUuZo6HpqD-5Jl8phKVC9SGzWmuw9wq1_D4iElhEb92YlPlXBvDsz4nLcl1UcXUmejx9B_UzkNfjudSdZsPpfuIWWLZOi8UzvJ4N3UADJKEJOLP6b7N9L6_wAHNhzFZTN4Mv4DZ_oM");'></div>
+<div>
+<p class="text-sm font-semibold text-slate-900 dark:text-white">Surf Shop Co.</p>
+<p class="text-xs text-slate-500 dark:text-slate-400">ID: #BND-9012</p>
+</div>
+</div>
+</td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800">
+<span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Suspended
+                                            </span>
+</td>
+<td class="p-4 text-sm text-slate-700 dark:text-slate-300">
+                                            0 Active
+                                        </td>
+<td class="p-4">
+<span class="text-xs font-medium text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded">None</span>
+</td>
+<td class="p-4">
+<span class="text-xs text-slate-400 dark:text-slate-600">-</span>
+</td>
+<td class="p-4 text-right">
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer">
+<td class="p-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-md bg-slate-200 dark:bg-slate-700 bg-cover bg-center" data-alt="Logo of The Green Cafe" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBZ4XxHpH7aY9eD6UN0dj4CGfNWEVOL29WgwVklFFoH50OGfUE_xxOU_btJhvtjwp-FKrmMmbIcqfsWxVOgnunEIswpykDn5GoDxQOizuHcN3BUOEZZAVsQlXVcuuXNKRgl-2xTwsfDlKoAcWMgoYY-np7qrndjBGq9kQBYrCsPH39iTJO4frjThmaLh7K66PcmLGsoNJti2ZsELqpdPteDmNmjvVbAIfgrj61LR5xEABWYI7TdtSKoX7xcw1SFMUW1Ytqoj8KHefc");'></div>
+<div>
+<p class="text-sm font-semibold text-slate-900 dark:text-white">The Green Cafe</p>
+<p class="text-xs text-slate-500 dark:text-slate-400">ID: #BND-1142</p>
+</div>
+</div>
+</td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Pending
+                                            </span>
+</td>
+<td class="p-4 text-sm text-slate-700 dark:text-slate-300">
+                                            -
+                                        </td>
+<td class="p-4">
+<span class="text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded">Drafting</span>
+</td>
+<td class="p-4">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-bold">2</span>
+<span class="text-xs text-slate-500 dark:text-slate-400">Onboarding</span>
+</div>
+</td>
+<td class="p-4 text-right">
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer">
+<td class="p-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-md bg-slate-200 dark:bg-slate-700 bg-cover bg-center" data-alt="Logo of Ocean View Hotel" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCbgQFKyi1L9vjboTwLGkuYDV6vL6jDFOdcVZnQoFgviy8VoA4RQNoCljH-P5cxh1FE_lUHS2Gs4-RvOiWDe8hG23BigVPQ3-rSZNO8okyn7LIeFxPVnV0QRnpTU1bSIjixXZu9pHGyVKiWtxn5-LXlYbGselLOK2UWUg4SqJSw49TjiAM66gfpQmm61B-bbsgR4NZiFQ45Rc7Y7BGfoJHN_kkit7wgZXjOv3W-pdwrOE3gA8NsIN3emNVWJLlZFuvB6QfArJHJXEk");'></div>
+<div>
+<p class="text-sm font-semibold text-slate-900 dark:text-white">Ocean View Hotel</p>
+<p class="text-xs text-slate-500 dark:text-slate-400">ID: #BND-3391</p>
+</div>
+</div>
+</td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Live
+                                            </span>
+</td>
+<td class="p-4 text-sm text-slate-700 dark:text-slate-300">
+                                            1 Active
+                                        </td>
+<td class="p-4">
+<span class="text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">Published</span>
+</td>
+<td class="p-4">
+<span class="text-xs text-slate-400 dark:text-slate-600">-</span>
+</td>
+<td class="p-4 text-right">
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="border-t border-border-light dark:border-border-dark p-3 flex items-center justify-between bg-white dark:bg-surface-dark">
+<span class="text-xs text-slate-500 dark:text-slate-400">Showing 1-4 of 142 merchants</span>
+<div class="flex gap-1">
+<button class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 disabled:opacity-50"><span class="material-symbols-outlined text-[18px]">chevron_left</span></button>
+<button class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400"><span class="material-symbols-outlined text-[18px]">chevron_right</span></button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Context Drawer (Right Pane) -->
+<aside class="w-80 bg-surface-light dark:bg-surface-dark border-l border-border-light dark:border-border-dark flex flex-col shrink-0 z-10 shadow-xl lg:shadow-none absolute inset-y-0 right-0 lg:static transform transition-transform duration-300">
+<!-- Drawer Header -->
+<div class="p-5 border-b border-border-light dark:border-border-dark flex justify-between items-start">
+<div>
+<h2 class="text-lg font-bold text-slate-900 dark:text-white">Bondi Burger Joint</h2>
+<span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 uppercase">Active Merchant</span>
+</div>
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Drawer Content -->
+<div class="flex-1 overflow-y-auto">
+<!-- Tabs -->
+<div class="flex border-b border-border-light dark:border-border-dark">
+<button class="flex-1 py-3 text-sm font-medium text-primary border-b-2 border-primary">Overview</button>
+<button class="flex-1 py-3 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">Deals</button>
+<button class="flex-1 py-3 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">History</button>
+</div>
+<div class="p-5 flex flex-col gap-6">
+<!-- Map Snippet -->
+<div class="rounded-lg overflow-hidden h-32 relative group cursor-pointer">
+<div class="absolute inset-0 bg-cover bg-center" data-alt="Map view showing Bondi Beach location" data-location="Bondi" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBxdmnP71c59tRczOUk5ubrS_-mqhsE-Fhql2aM-cIhm7AJZ3FXY8YTNztPXyxRoz9ifRWHPav0TsaqdZKJ4dbCvcNecHudqSEndEELPr90sMMaV-Wgi51nXKNUVIZ2GW39NuX5-ft_FnZPKKE42tW7xRdC771-9B-ydBhMQPFXbcJngMJnULr0BQUo8oIdpvgIGad3iQQGyfhyyQSxAQPKeWgMGM61ZwMXF3v2v8B3PqB9f4z3y7PfDGYYcu8mJj2sSR_3HUbddOw");'></div>
+<div class="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors"></div>
+<div class="absolute bottom-2 left-2 bg-white/90 dark:bg-black/80 px-2 py-1 rounded text-xs font-medium text-slate-800 dark:text-white flex items-center gap-1 backdrop-blur-sm shadow-sm">
+<span class="material-symbols-outlined text-[14px]">location_on</span>
+                                80 Campbell Parade
+                            </div>
+</div>
+<!-- Stats Grid -->
+<div class="grid grid-cols-2 gap-3">
+<div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-border-light dark:border-border-dark">
+<p class="text-xs text-slate-500 dark:text-slate-400">Total Sales</p>
+<p class="text-lg font-semibold text-slate-900 dark:text-white">$12,450</p>
+</div>
+<div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-border-light dark:border-border-dark">
+<p class="text-xs text-slate-500 dark:text-slate-400">Rating</p>
+<p class="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-1">4.8 <span class="material-symbols-outlined text-amber-400 text-sm">star</span></p>
+</div>
+</div>
+<!-- Support Ticket -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<h3 class="text-sm font-bold text-slate-900 dark:text-white">Active Ticket</h3>
+<a class="text-xs text-primary hover:underline" href="#">View all</a>
+</div>
+<div class="p-3 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-lg">
+<div class="flex justify-between mb-1">
+<span class="text-xs font-bold text-red-700 dark:text-red-400">#402 - Content Issue</span>
+<span class="text-[10px] text-red-600 dark:text-red-400 opacity-70">2h ago</span>
+</div>
+<p class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                                    Merchant is unable to upload the essay for "Best Burgers in Bondi". System throws error 505.
+                                </p>
+<div class="mt-3 flex gap-2">
+<button class="flex-1 py-1.5 bg-white dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-xs font-medium text-red-700 dark:text-red-300 rounded hover:bg-red-50 dark:hover:bg-red-900/30">Reply</button>
+<button class="flex-1 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded shadow-sm">Resolve</button>
+</div>
+</div>
+</div>
+<!-- Quick Actions -->
+<div class="flex flex-col gap-2">
+<h3 class="text-sm font-bold text-slate-900 dark:text-white">Management</h3>
+<button class="flex items-center gap-3 w-full p-2 text-left rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-sm text-slate-700 dark:text-slate-300 transition-colors">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+                                Edit Merchant Details
+                            </button>
+<button class="flex items-center gap-3 w-full p-2 text-left rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-sm text-slate-700 dark:text-slate-300 transition-colors">
+<span class="material-symbols-outlined text-[20px]">lock_reset</span>
+                                Reset Password
+                            </button>
+<button class="flex items-center gap-3 w-full p-2 text-left rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-sm text-red-600 dark:text-red-400 transition-colors">
+<span class="material-symbols-outlined text-[20px]">block</span>
+                                Suspend Account
+                            </button>
+</div>
+</div>
+</div>
+<!-- Drawer Footer -->
+<div class="p-4 border-t border-border-light dark:border-border-dark bg-slate-50 dark:bg-slate-900/50">
+<button class="w-full py-2.5 bg-primary hover:bg-blue-600 text-white rounded-lg text-sm font-medium shadow-sm transition-colors">
+                        Simulate Login
+                    </button>
+</div>
+</aside>
+</main>
+</div>
+<!-- Toggle for Dark Mode Demo (Fixed Bottom Right) -->
+<!-- Note: In a real app this would be in settings, just adding for visualization of the theme requirement -->
+<!-- 
+    <div class="fixed bottom-4 right-4 z-50">
+        <button onclick="document.documentElement.classList.toggle('dark')" class="p-3 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg hover:scale-110 transition-transform">
+            <span class="material-symbols-outlined">contrast</span>
+        </button>
+    </div>
+    -->
+</body></html>
