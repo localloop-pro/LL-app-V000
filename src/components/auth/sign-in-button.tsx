@@ -31,11 +31,9 @@ export function SignInButton() {
           // If Better Auth returns an error instead of redirecting, surface it for debugging.
           // (This often happens when the auth client baseURL/origin is misconfigured.)
           if (result && typeof result === "object" && "error" in result && result.error) {
-            // eslint-disable-next-line no-console
             console.error("Auth error starting Google OAuth:", result.error);
           }
         } catch (e) {
-          // eslint-disable-next-line no-console
           console.error("Auth error starting Google OAuth:", e);
           setIsStartingAuth(false);
         }
