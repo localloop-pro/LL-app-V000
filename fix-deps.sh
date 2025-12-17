@@ -18,7 +18,7 @@ for path in "${MISSING[@]}"; do
     mkdir -p "$(dirname "$path")"
     name="$(basename "$path" .tsx)"
     # Capitalize first letter for component name
-    capitalized_name="$(echo "$name" | sed 's/^./\U&/')"
+    capitalized_name="$(echo "$name" | awk '{print toupper(substr($0,1,1)) substr($0,2)}')"
     cat >"$path" <<EOL
 // AUTO-GENERATED stub
 export function ${capitalized_name}() {
